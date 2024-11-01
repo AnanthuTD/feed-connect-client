@@ -1,0 +1,30 @@
+
+  .shimmer {
+    background-image: linear-gradient(to bottom right, grey, white, grey);
+    background-size: 200% 200%;
+    animation: shimmer 3000ms linear infinite;
+    -webkit-animation-fill-mode: forwards; /* Add this line */
+    animation-fill-mode: forwards; /* Add this line */
+    /* height: inherit; */
+    transition: transform 2s;
+    -webkit-backface-visibility: hidden; /* Fix flickering in Chrome/Safari */
+    backface-visibility: hidden;
+  
+  }
+  
+  @keyframes shimmer {
+    0% {
+      background-position: top left;
+    }
+    50% {
+      background-position: bottom right;
+    }
+    100% {
+      background-position: top left;
+    }
+  }
+  
+  .inner-div.animate {
+    transform: translateX(0);
+  }
+  

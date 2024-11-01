@@ -1,0 +1,122 @@
+.embla {
+    --slide-spacing: 1rem;
+    --slide-size: 100%;
+    --slide-height: 100%;
+    position: relative;
+    padding: 1.6rem;
+}
+
+.embla__viewport {
+    overflow: hidden;
+    width: 25rem;
+}
+
+.embla__container {
+    backface-visibility: hidden;
+    display: flex;
+    touch-action: pan-y;
+    flex-direction: row;
+    height: 80vh;
+    /* margin-left: calc(var(--slide-spacing) * -1); */
+}
+
+.embla__slide {
+    flex: 0 0 var(--slide-size);
+    min-width: 0;
+    /* padding-left: var(--slide-spacing); */
+    position: relative;
+    height: 100%;
+}
+
+.embla__slide__img {
+    display: block;
+    height: var(--slide-height);
+    width: 100%;
+    object-fit: cover;
+}
+
+.embla__dot,
+.embla__button {
+    -webkit-appearance: none;
+    appearance: none;
+    background-color: transparent;
+    touch-action: manipulation;
+    display: inline-flex;
+    text-decoration: none;
+    cursor: pointer;
+    border: 0;
+    padding: 0;
+    margin: 0;
+}
+
+.embla__dots {
+    z-index: 1;
+    top: 1rem;
+    position: absolute;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-inline: 1.6rem;
+    --background-site: grey;
+  
+}
+
+.embla__dot {
+    width: 3rem;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    margin-right: 0.75rem;
+    margin-left: 0.75rem;
+    /* --remaining-width:100%; */
+    --progress-width: 0%
+}
+
+.embla__dot:after {
+    /* background: linear-gradient(90deg, #c100b4, #fec600 var(--progress-width), #ccc); */
+    background: linear-gradient(90deg, #c100b4 0%, #fec600 var(--progress-width), #ccc var(--progress-width));
+
+
+    border-radius: 0.2rem;
+    width:100%;
+    height: 0.3rem;
+    content: '';
+}
+
+/* .embla__dot__selected:after {
+    background: linear-gradient(90deg, #c100b4, #fec600 50%, #ccc 50%);
+   
+} */
+
+.embla__button {
+    z-index: 1;
+    color: var(--background-site);
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    width: 4rem;
+    height: 4rem;
+}
+
+.embla__button__prev {
+    left: 1.6rem;
+}
+
+.embla__button__next {
+    right: 1.6rem;
+}
+
+.embla__button:disabled {
+    opacity: 0.3;
+}
+
+.embla__button__svg {
+    width: 65%;
+    height: 65%;
+}

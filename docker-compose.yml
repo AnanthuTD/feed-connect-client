@@ -1,0 +1,9 @@
+services:
+  frontned:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+    environment:
+      - HOST_URL=http://host.docker.internal:8000/

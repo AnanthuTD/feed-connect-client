@@ -1,0 +1,40 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<!-- <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
+    width="50.000000pt" height="50.000000pt" viewBox="0 0 50.000000 50.000000"
+    preserveAspectRatio="xMidYMid meet">
+
+    <g transform="translate(0.000000,50.000000) scale(0.100000,-0.100000)"
+        fill="#ffffff" stroke="none">
+        <path
+            d="M105 451 c-30 -13 -54 -44 -61 -79 l-6 -32 81 0 82 0 -33 60 c-18 33
+-35 60 -38 59 -3 0 -14 -4 -25 -8z" />
+        <path
+            d="M162 452 c2 -4 17 -31 33 -60 l30 -52 53 0 53 0 -33 60 -33 60 -53 0
+c-30 0 -52 -3 -50 -8z" />
+        <path
+            d="M292 452 c2 -4 17 -31 33 -60 l30 -52 53 0 c40 0 52 3 52 15 0 29
+-30 75 -60 90 -30 15 -114 21 -108 7z" />
+        <path
+            d="M40 225 c0 -164 24 -185 210 -185 186 0 210 21 210 185 l0 95 -210 0
+-210 0 0 -95z m231 8 c27 -14 49 -31 49 -38 0 -15 -97 -68 -110 -60 -11 7 -14
+108 -3 118 9 10 11 10 64 -20z" />
+    </g>
+</svg> -->
+
+<svg aria-label="Reels" class="_ab6-" color="rgb(245, 245, 245)" fill="rgb(245, 245, 245)"
+    height="24" role="img" viewBox="0 0 24 24" width="24">
+    <line fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="2" x1="2.049"
+        x2="21.95" y1="7.002" y2="7.002"></line>
+    <line fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+        stroke-width="2" x1="13.504" x2="16.362" y1="2.001" y2="7.002"></line>
+    <line fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+        stroke-width="2" x1="7.207" x2="10.002" y1="2.11" y2="7.002"></line>
+    <path
+        d="M2 12.001v3.449c0 2.849.698 4.006 1.606 4.945.94.908 2.098 1.607 4.946 1.607h6.896c2.848 0 4.006-.699 4.946-1.607.908-.939 1.606-2.096 1.606-4.945V8.552c0-2.848-.698-4.006-1.606-4.945C19.454 2.699 18.296 2 15.448 2H8.552c-2.848 0-4.006.699-4.946 1.607C2.698 4.546 2 5.704 2 8.552Z"
+        fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+        stroke-width="2"></path>
+    <path
+        d="M9.763 17.664a.908.908 0 0 1-.454-.787V11.63a.909.909 0 0 1 1.364-.788l4.545 2.624a.909.909 0 0 1 0 1.575l-4.545 2.624a.91.91 0 0 1-.91 0Z"
+        fill-rule="evenodd"></path>
+</svg>

@@ -1,0 +1,20 @@
+.facebook_logo {
+    background-position: -414px -259px;
+    background-image: url(https://bit.ly/3v2LT17);
+    height: 16px;
+    width: 16px;
+}
+
+.apple_store_logo {
+    background-position: -132px -182px;
+    height: 42px;
+    width: 128px;
+    background-image: url(https://bit.ly/3v2LT17);
+}
+
+.google_store_logo {
+    background-position: 0 -182px;
+    height: 42px;
+    width: 130px;
+    background-image: url(https://bit.ly/3v2LT17);
+}
