@@ -2,6 +2,7 @@ import React from "react";
 import "./globals.css";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 import LayoutProvider from "./layoutProvider";
+import ApolloContextProvider from "./ApolloContextProvider";
 
 export const metadata = {
 	title: "WowGram",
@@ -18,7 +19,9 @@ export default function RootLayout({
 			<html lang="en">
 				<body>
 					<AntdRegistry>
-						<LayoutProvider>{children}</LayoutProvider>
+						<ApolloContextProvider>
+							<LayoutProvider>{children}</LayoutProvider>
+						</ApolloContextProvider>
 					</AntdRegistry>
 				</body>
 			</html>
