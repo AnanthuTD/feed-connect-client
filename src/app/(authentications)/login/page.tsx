@@ -50,7 +50,7 @@ export default function Login() {
 				<form className="mt-8 flex w-64 flex-col" onSubmit={handleSubmit}>
 					<input
 						autoFocus
-						name="phone_email_username"
+						name="phoneEmailUsername"
 						className="mb-2 w-full rounded border border-gray-300 bg-gray-100 px-2 py-2 text-xs text-black focus:border-gray-400 focus:outline-none active:outline-none"
 						id="email"
 						placeholder="Phone number, username, or email"
@@ -58,14 +58,14 @@ export default function Login() {
 						onChange={(e) =>
 							setFormData({
 								...formData,
-								phone_email_username: e.target.value,
+								phoneEmailUsername: e.target.value,
 							})
 						}
 					/>
 					<div className="relative mb-2 flex items-center">
 						<input
 							autoFocus
-							name="password1"
+							name="password"
 							className="w-full rounded border border-gray-300 bg-gray-100 px-2 py-2 text-xs text-black focus:border-gray-400 focus:outline-none active:outline-none"
 							id="password"
 							placeholder="Password"
@@ -73,7 +73,7 @@ export default function Login() {
 							onChange={(e) =>
 								setFormData({
 									...formData,
-									password1: e.target.value,
+									password: e.target.value,
 								})
 							}
 						/>
