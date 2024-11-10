@@ -69,7 +69,7 @@ export default function Signup() {
 				"Content-Type": "application/json",
 			};
 
-			const response = await axios.post("api/user/signup/", formData, {
+			const response = await axios.post("api/auth/signup/", formData, {
 				headers,
 				withCredentials: true, // Include credentials in the request
 			});

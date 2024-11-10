@@ -58,7 +58,7 @@ axiosInstance.interceptors.response.use(
 			if (!isRefreshing) {
 				isRefreshing = true;
 				try {
-					const response = await axios.post("api/refresh-token");
+					const response = await axios.post("api/auth/refresh-token");
 					const newAccessToken = response.data.accessToken;
 
 					// Update Authorization header in the original request

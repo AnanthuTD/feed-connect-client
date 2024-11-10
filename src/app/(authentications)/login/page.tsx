@@ -26,12 +26,12 @@ export default function Login() {
 				"Content-Type": "application/json",
 			};
 
-			const { data } = await axios.post("api/user/login/", formData, {
+			const { data } = await axios.post("api/auth/login/", formData, {
 				headers,
 				withCredentials: true,
 			});
 
-			if (data.status) {
+			if (data) {
 				router.push("/");
 			} else {
 				throw Error("Login Failed");
