@@ -26,7 +26,7 @@ export default function Login() {
 				"Content-Type": "application/json",
 			};
 
-			const { data } = await axios.post("api/accounts/login/", formData, {
+			const { data } = await axios.post("api/user/login/", formData, {
 				headers,
 				withCredentials: true,
 			});

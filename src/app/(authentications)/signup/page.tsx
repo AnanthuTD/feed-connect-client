@@ -10,14 +10,14 @@ import { useRouter } from "next/navigation";
 import axios from "@/lib/axios";
 
 interface IsValidState {
-	phone_or_email?: boolean;
-	password1?: boolean;
+	phoneOrEmail?: boolean;
+	password?: boolean;
 	username?: boolean;
 }
 
 interface ErrorState {
-	phone_or_email?: string;
-	password1?: string;
+	phoneOrEmail?: string;
+	password?: string;
 	username?: string;
 	phone?: string;
 }
@@ -37,26 +37,26 @@ export default function Signup() {
 	};
 
 	async function validate_email_or_mobile(data: string) {
-		setIsValid((isValid) => ({ ...isValid, phone_or_email: true }));
+		setIsValid((isValid) => ({ ...isValid, phoneOrEmail: true }));
 		if (validateEmail(data)) {
 			setFormData({
 				...formData,
-				phone_or_email: data,
+				phoneOrEmail: data,
 			});
 		} else if (validatePhone(data)) {
 			setFormData({
 				...formData,
-				phone_or_email: data,
+				phoneOrEmail: data,
 			});
 		} else {
-			setIsValid((isValid) => ({ ...isValid, phone_or_email: false }));
+			setIsValid((isValid) => ({ ...isValid, phoneOrEmail: false }));
 		}
 	}
 
 	async function validate_password(password: string) {
 		var result = await validatePassword(password);
 		if (result) {
-			setIsValid((isValid) => ({ ...isValid, password1: result }));
+			setIsValid((isValid) => ({ ...isValid, password: result }));
 		}
 	}
 
@@ -69,7 +69,7 @@ export default function Signup() {
 				"Content-Type": "application/json",
 			};
 
-			const response = await axios.post("api/accounts/signup/", formData, {
+			const response = await axios.post("api/user/signup/", formData, {
 				headers,
 				withCredentials: true, // Include credentials in the request
 			});
@@ -92,14 +92,14 @@ export default function Signup() {
 		if (Object.keys(errors).length !== 0) {
 			console.error("errors: ", errors);
 
-			if (errors.hasOwnProperty("phone_or_email")) {
+			if (errors.hasOwnProperty("phoneOrEmail")) {
 				setIsValid((isValid) => ({
 					...isValid,
-					phone_or_email: false,
+					phoneOrEmail: false,
 				}));
 			}
-			if (errors.hasOwnProperty("password1")) {
-				setIsValid((isValid) => ({ ...isValid, password1: false }));
+			if (errors.hasOwnProperty("password")) {
+				setIsValid((isValid) => ({ ...isValid, password: false }));
 			}
 			if (errors.hasOwnProperty("username")) {
 				setIsValid((isValid) => ({ ...isValid, username: false }));
@@ -114,8 +114,8 @@ export default function Signup() {
 					<div className="relative mb-2 flex items-center">
 						<div className="absolute inset-y-0 right-0 flex items-center pr-2">
 							{!isValid.hasOwnProperty(
-								"phone_or_email"
-							) ? null : isValid.phone_or_email ? (
+								"phoneOrEmail"
+							) ? null : isValid.phoneOrEmail ? (
 								<svg
 									xmlns="http://www.w3.org/2000/svg"
 									fill="none"
@@ -147,9 +147,9 @@ export default function Signup() {
 						</div>
 						<input
 							autoFocus
-							name="phone_or_email"
+							name="phoneOrEmail"
 							className="w-full rounded border border-gray-300 bg-gray-100 px-2 py-2 text-xs text-black focus:border-gray-400 focus:outline-none active:outline-none"
-							id="phone_or_email"
+							id="phoneOrEmail"
 							placeholder="mobile number or email"
 							type="text"
 							onChange={(e) => validate_email_or_mobile(e.target.value)}
@@ -157,7 +157,7 @@ export default function Signup() {
 					</div>
 					<input
 						autoFocus
-						name="fullname"
+						name="fullName"
 						className="mb-2 w-full rounded border border-gray-300 bg-gray-100 px-2 py-2 text-xs text-black focus:border-gray-400 focus:outline-none active:outline-none"
 						id="name"
 						placeholder="full name"
@@ -165,7 +165,7 @@ export default function Signup() {
 						onChange={(e) =>
 							setFormData({
 								...formData,
-								fullname: e.target.value,
+								fullName: e.target.value,
 							})
 						}
 					/>
@@ -187,8 +187,8 @@ export default function Signup() {
 					<div className="relative mb-2 flex items-center">
 						<div className="absolute inset-y-0 right-0 flex items-center pr-2">
 							{!isValid.hasOwnProperty(
-								"phone_or_email"
-							) ? null : isValid.phone_or_email ? (
+								"phoneOrEmail"
+							) ? null : isValid.phoneOrEmail ? (
 								<svg
 									xmlns="http://www.w3.org/2000/svg"
 									fill="none"
@@ -220,7 +220,7 @@ export default function Signup() {
 						</div>
 						<input
 							autoFocus
-							name="password1"
+							name="password"
 							className="w-full rounded border border-gray-300 bg-gray-100 px-2 py-2 text-xs text-black focus:border-gray-400 focus:outline-none active:outline-none"
 							id="password"
 							placeholder="Password"
@@ -228,7 +228,7 @@ export default function Signup() {
 							onChange={(e) =>
 								setFormData({
 									...formData,
-									password1: e.target.value,
+									password: e.target.value,
 								})
 							}
 						/>
