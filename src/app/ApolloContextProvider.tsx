@@ -28,8 +28,14 @@ const subscribeTokenRefresh = (callback: (token: string) => void) => {
 
 // Call subscribers after a new access token is obtained
 const onTokenRefreshed = (newAccessToken: string) => {
-	console.log(refreshSubscribers);
-	refreshSubscribers.forEach((callback) => callback(newAccessToken));
+	/* 
+	 * Somehow the onError handler is called multiple times for a req. 
+	 * ( for now its happening only for the first req, haven't checked the other cases. ) 
+	 * so to solve it just skipping the first one.
+	*/
+	refreshSubscribers.forEach((callback, index) => {
+		if (index !== 0) callback(newAccessToken);
+	});
 	refreshSubscribers = [];
 };
 
