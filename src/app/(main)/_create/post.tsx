@@ -5,8 +5,45 @@ import AvatarUsername from "../../components/avatar_username";
 import LocationIcon from "./locationIcon";
 import Preview from "./preview";
 import React from "react";
-import axios from "@/lib/axios";
 import { Checkbox } from "antd";
+import { gql, useMutation } from "@apollo/client";
+
+// Define two mutations for post and story
+const CREATE_POST_MUTATION = gql`
+	mutation createPost(
+		$file: Upload!
+		$caption: String
+		$location: String
+		$isPrivate: Boolean
+	) {
+		createPost(
+			file: $file
+			caption: $caption
+			location: $location
+			isPrivate: $isPrivate
+		) {
+			id
+		}
+	}
+`;
+
+const CREATE_STORY_MUTATION = gql`
+	mutation createStory(
+		$file: Upload!
+		$caption: String
+		$location: String
+		$isPrivate: Boolean
+	) {
+		createStory(
+			file: $file
+			caption: $caption
+			location: $location
+			isPrivate: $isPrivate
+		) {
+			id
+		}
+	}
+`;
 
 function Post({
 	setCreate,
@@ -19,22 +56,24 @@ function Post({
 }) {
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
 	const [preview, setPreview] = useState<string | null>(null);
-	const [formData, setFormData] = useState<FormData>(new FormData());
-	const [location, setLocation] = useState("");
 	const [caption, setCaption] = useState("");
-	const [submit, setSubmit] = useState(true);
-	const [fileAdded, setFileAdded] = useState(false);
+	const [location, setLocation] = useState("");
 	const [privatePost, setPrivatePost] = useState(false);
+	const [submit, setSubmit] = useState(false);
 
-	// ref
+	// Choose the mutation based on whether it's a post or a story
+	const [uploadFileMutation] = useMutation(
+		post ? CREATE_POST_MUTATION : CREATE_STORY_MUTATION
+	);
+
+	// refs
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
 	const formSubmitRef = useRef<HTMLFormElement | null>(null);
 	const titleRef = useRef<HTMLDivElement | null>(null);
 	const boxRef = useRef<HTMLDivElement | null>(null);
 	const contentRef = useRef<HTMLDivElement | null>(null);
 
-	const url = post ? "/api/post" : "/api/post/story";
-
+	// handle file input
 	const handleClick = () => {
 		if (fileInputRef.current) fileInputRef.current.click();
 	};
@@ -47,52 +86,7 @@ function Post({
 		}
 	};
 
-	useEffect(() => {
-		async function postData() {
-			try {
-
-				const response = await axios.post(url, formData, {
-					withCredentials: true, // include credentials
-				});
-
-				if (response.status === 408) {
-					postData(); // Retry on timeout if necessary
-					return;
-				}
-
-				const data = response.data;
-
-				if (data.status === true) {
-					setCreate(false);
-				} else {
-					console.error("posting failed");
-				}
-			} catch (error) {
-				console.error("Error during Axios request:", error);
-				console.error(
-					"An error occurred while sending data. Please try again later."
-				);
-			}
-		}
-
-		if (selectedFile && !formData.has("file")) {
-			setFileAdded(true);
-			formData.append("file", selectedFile);
-			return;
-		}
-
-		if (formData.has("file")) {
-			formData.append("caption", caption);
-			formData.append("location", location);
-			formData.append("private", privatePost);
-
-			// Posting data to server using Axios
-			postData();
-		}
-	}, [submit, formData]);
-
-	useEffect(() => {}, [formData]);
-
+	// Preview the file
 	useEffect(() => {
 		if (selectedFile) {
 			let reader = new FileReader();
@@ -102,6 +96,44 @@ function Post({
 			reader.readAsDataURL(selectedFile);
 		}
 	}, [selectedFile]);
+
+	// Handle submission to GraphQL API
+	useEffect(() => {
+		async function submitContent() {
+			if (selectedFile) {
+				try {
+					const { data } = await uploadFileMutation({
+						variables: {
+							file: selectedFile,
+							caption,
+							location,
+							isPrivate: privatePost,
+						},
+					});
+
+					if (data.createPost?.id || data.createStory?.id) {
+						setCreate(false); // Successfully posted or story created
+					} else {
+						console.error("Error: Content creation failed");
+					}
+				} catch (error) {
+					console.error("Error while uploading file:", error);
+				}
+			}
+		}
+
+		if (selectedFile && submit) {
+			console.log(selectedFile, submit)
+			submitContent();
+		}
+	}, [
+		submit,
+		selectedFile,
+		caption,
+		location,
+		privatePost,
+		uploadFileMutation,
+	]);
 
 	useEffect(() => {
 		if (!boxRef.current?.clientHeight) return;
@@ -134,18 +166,20 @@ function Post({
 				ref={titleRef}>
 				<div className="w-1/4"></div>
 				<div className="flex w-2/4 items-center justify-center">
-					Create new post
+					Create new {post ? "post" : "story"}
 				</div>
 				<div className="flex w-1/4 justify-end">
-					{selectedFile ? (
+					{selectedFile && (
 						<button
 							className="rounded p-1 text-sm text-blue-500"
-							onClick={() => setSubmit(!submit)}>
+							onClick={() => setSubmit(!submit)}
+						>
 							Next
 						</button>
-					) : null}
+					)}
 				</div>
 			</div>
+
 			{/* content */}
 			<div
 				className={["flex", !selectedFile ? "aspect-square" : ""].join(" ")}
@@ -157,14 +191,15 @@ function Post({
 							<p>Drag photos and videos here</p>
 							<button
 								className="rounded-lg bg-blue-500 p-2 text-sm font-bold text-white"
-								onClick={handleClick}>
+								onClick={handleClick}
+							>
 								Select from computer
 							</button>
 							<form
 								ref={formSubmitRef}
-								className=""
 								style={{ visibility: "hidden" }}
-								encType="multipart/form-data">
+								encType="multipart/form-data"
+							>
 								<input
 									ref={fileInputRef}
 									type="file"
@@ -173,9 +208,7 @@ function Post({
 								/>
 							</form>
 						</div>
-					) : // Video preview
-
-					preview ? (
+					) : preview ? (
 						<Preview
 							preview={preview}
 							name={selectedFile.name}
@@ -183,12 +216,12 @@ function Post({
 						/>
 					) : null}
 				</div>
-				{fileAdded ? (
+
+				{selectedFile && (
 					<div
 						className="space-y-3 border-l p-3"
-						style={{
-							borderColor: "#3d3d3d",
-						}}>
+						style={{ borderColor: "#3d3d3d" }}
+					>
 						<AvatarUsername
 							height={30}
 							width={30}
@@ -201,8 +234,8 @@ function Post({
 							rows={10}
 							placeholder="Write a caption..."
 							className="resize-none bg-transparent outline-none"
-							required={false}
-							onChange={(e) => setCaption(e.target.value)}></textarea>
+							onChange={(e) => setCaption(e.target.value)}
+						></textarea>
 						<SmileIcon width={20} height={20} />
 						<div className="flex justify-between">
 							<input
@@ -216,10 +249,12 @@ function Post({
 							</span>
 						</div>
 						<div className="py-5">
-							<Checkbox onChange={()=>setPrivatePost(!privatePost)}>Private</Checkbox>
+							<Checkbox onChange={() => setPrivatePost(!privatePost)}>
+								Private
+							</Checkbox>
 						</div>
 					</div>
-				) : null}
+				)}
 			</div>
 		</div>
 	);
