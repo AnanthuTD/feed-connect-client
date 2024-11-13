@@ -1,68 +1,54 @@
 "use client";
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { UserState } from "../../../utils/Interfaces";
 import { useRouter } from "next/navigation";
-import Loading from "@/app/loading";
-import axios from "@/lib/axios";
+import Loading from "@/app/loading"; // Import the Loading component
+import { gql, useQuery } from "@apollo/client";
 
+const GET_PROFILE = gql`
+	query GetProfile {
+		user {
+			fullName
+			username
+			avatar
+		}
+	}
+`;
+
+// Define the interface for context value
 interface UserContextInterface {
 	user: UserState | undefined;
 	setUser: React.Dispatch<React.SetStateAction<UserState | undefined>>;
 }
 
-// context
+// Create the UserContext with a default empty implementation
 const UserContext = createContext<UserContextInterface>({
 	user: undefined,
 	setUser: () => {},
 });
+
 export function useUserContext(): UserContextInterface {
 	return useContext(UserContext);
 }
 
-export function UserContextProvider({
-	children,
-}: {
-	children: React.ReactNode;
-}) {
-	// useStates``
+// Provider component to wrap the app with the User context
+export function UserContextProvider({ children }: { children: ReactNode }) {
 	const [user, setUser] = useState<UserState | undefined>(undefined);
-	const [loading, setLoading] = useState(true);
-
-	// miscellaneous
+	const { loading, data, error } = useQuery(GET_PROFILE, { errorPolicy: "all" });
 	const router = useRouter();
 
-	// Define an effect to handle user authentication
 	useEffect(() => {
-		// Define a function to fetch the user from the backend API
-		const fetchUser = async () => {
-			try {
-				const { data } = await axios.get("api/user/profile/", {
-					withCredentials: true,
-				});
-				// Stop loading
-				setLoading(false);
-					setUser(data.user);
-			} catch (error) {
-				console.error("================ERROR ON LOGIN====================");
-				console.error(error);
-				console.error("====================================");
-				router.push("/login");
-			}
-		};
-
-		// If no user object is available, fetch the user from the API
-		if (!user) fetchUser();
-	}, [user]);
+		if (error) {
+			console.error("Authentication error: redirecting to login.");
+			router.push("/login");
+		} else if (data?.user) {
+			setUser(data.user);
+		}
+	}, [error, data]);
 
 	return (
-		<>
-		{/* 	{loading ? (
-				<Loading />
-			) : ( */}
-				<UserContext.Provider value={{ user, setUser }}>
-					{children}
-				</UserContext.Provider>
-			{/* )} */}
-		</>
+		<UserContext.Provider value={{ user, setUser }}>
+			{loading ? <Loading /> : children}
+		</UserContext.Provider>
 	);
 }
