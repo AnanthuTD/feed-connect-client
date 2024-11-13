@@ -13,6 +13,7 @@
     "@apollo/client": "^3.11.9",
     "@headlessui/react": "^2.0.4",
     "antd": "^5.14.2",
+    "apollo-upload-client": "^18.0.1",
     "axios": "^1.5.0",
     "embla-carousel-react": "^8.0.0-rc07",
     "graphql": "^16.9.0",
@@ -24,6 +25,7 @@
     "react-player": "^2.15.1"
   },
   "devDependencies": {
+    "@types/apollo-upload-client": "^18",
     "@types/js-cookie": "^3.0.3",
     "@types/lodash": "^4.17.0",
     "@types/node": "^20",

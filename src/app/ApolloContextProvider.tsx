@@ -12,6 +12,7 @@ import {
 import { setContext } from "@apollo/client/link/context";
 import { onError } from "@apollo/client/link/error";
 import axios from "axios";
+import createUploadLink from "apollo-upload-client/createUploadLink.mjs";
 
 const httpLink = new HttpLink({ uri: "/api/graphql" });
 
@@ -105,7 +106,16 @@ const errorLink = onError(
 
 // Apollo Client setup
 const client = new ApolloClient({
-	link: from([authLink, errorLink as ApolloLink, httpLink]),
+	link: from([
+		authLink,
+		errorLink,
+		createUploadLink({
+			uri: "/api/graphql",
+			headers: {
+				"Apollo-Require-Preflight": "true",
+			},
+		}) as unknown as ApolloLink,
+	]),
 	cache: new InMemoryCache(),
 });
 
