@@ -29,10 +29,10 @@ function SuggestedForYou() {
 			} catch (error: AxiosError | any) {
 				if (error instanceof AxiosError) {
 				  // Handle AxiosError
-				  setError(error.response ? error.response.data : error.message);
+				  setError(error.response ? error.response.data.message : "Failed to fetch suggestions");
 				} else {
 				  // Handle other types of errors
-				  setError(error.message);
+				  setError("Failed to fetch suggestions");
 				}
 				setLoading(false);
 			 }

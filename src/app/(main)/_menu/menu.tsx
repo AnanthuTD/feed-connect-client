@@ -424,7 +424,7 @@ export default function Menu() {
 												<image
 													href={
 														user
-															? `/api${user.profile_img}`
+															? `${user.avatar}`
 															: "/images/pro-pic.jpg"
 													}
 													width="150"
