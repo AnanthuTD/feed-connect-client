@@ -7,25 +7,28 @@ import {
 	HttpLink,
 	from,
 	ApolloLink,
-	Operation,
+	Observable,
 } from "@apollo/client";
 import { setContext } from "@apollo/client/link/context";
 import { onError } from "@apollo/client/link/error";
 import axios from "axios";
 import createUploadLink from "apollo-upload-client/createUploadLink.mjs";
+import promiseToObservable from "@/utils/promiseToObservable";
 
 const httpLink = new HttpLink({ uri: "/api/graphql" });
 
-// Define the types for the token refresh queue
+// Track token refresh state and queue requests
 let isRefreshing = false;
 let refreshSubscribers: ((token: string) => void)[] = [];
 
-// Helper function to queue requests until token is refreshed
+// Queue requests during token refresh
 const subscribeTokenRefresh = (callback: (token: string) => void) => {
 	refreshSubscribers.push(callback);
 };
 
+// Call subscribers after a new access token is obtained
 const onTokenRefreshed = (newAccessToken: string) => {
+	console.log(refreshSubscribers);
 	refreshSubscribers.forEach((callback) => callback(newAccessToken));
 	refreshSubscribers = [];
 };
@@ -57,41 +60,43 @@ const authLink = setContext(async (_, { headers }) => {
 	};
 });
 
-// Handle errors such as 401 and refresh token logic
+// Handle errors like 401 and manage token refresh logic
 const errorLink = onError(
-	({ forward, operation, graphQLErrors, networkError }) => {
+	({ graphQLErrors, networkError, operation, forward }) => {
 		if (graphQLErrors) {
-			for (let err of graphQLErrors) {
+			for (const err of graphQLErrors) {
 				if (err?.extensions?.code === "UNAUTHENTICATED") {
+					// If not already refreshing, start token refresh
 					if (!isRefreshing) {
 						isRefreshing = true;
-						refreshAccessToken()
-							.then((newAccessToken) => {
+						const refreshPromise = refreshAccessToken();
+
+						return promiseToObservable(refreshPromise).flatMap(
+							(newAccessToken) => {
+								// Update the request with the new token
 								operation.setContext(({ headers = {} }) => ({
 									headers: {
 										...headers,
 										Authorization: `Bearer ${newAccessToken}`,
 									},
 								}));
-							})
-							.catch((error) => {
-								console.error("Refresh token failed:", error);
-								// Handle logout or redirect to login if needed
-							})
-							.finally(() => {
+
 								isRefreshing = false;
-							});
+								return forward(operation);
+							}
+						);
 					}
 
-					new Promise((resolve) => {
-						subscribeTokenRefresh((newAccessToken: string) => {
+					// Queue requests until the token refresh completes
+					return new Observable((observer) => {
+						subscribeTokenRefresh((newAccessToken) => {
 							operation.setContext(({ headers = {} }) => ({
 								headers: {
 									...headers,
 									Authorization: `Bearer ${newAccessToken}`,
 								},
 							}));
-							resolve(forward(operation));
+							forward(operation).subscribe(observer);
 						});
 					});
 				}
