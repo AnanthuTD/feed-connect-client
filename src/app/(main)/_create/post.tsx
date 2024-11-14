@@ -5,7 +5,7 @@ import AvatarUsername from "../../components/avatar_username";
 import LocationIcon from "./locationIcon";
 import Preview from "./preview";
 import React from "react";
-import { Checkbox } from "antd";
+import { Checkbox, notification } from "antd";
 import { gql, useMutation } from "@apollo/client";
 
 // Define two mutations for post and story
@@ -32,13 +32,15 @@ const CREATE_STORY_MUTATION = gql`
 		$file: Upload!
 		$caption: String
 		$location: String
-		$isPrivate: Boolean
+		$hashTag: [String]
+		$mentions: [String]
 	) {
 		createStory(
 			file: $file
 			caption: $caption
 			location: $location
-			isPrivate: $isPrivate
+			hashTag: $hashTag
+			mentions: $mentions
 		) {
 			id
 		}
@@ -60,11 +62,12 @@ function Post({
 	const [location, setLocation] = useState("");
 	const [privatePost, setPrivatePost] = useState(false);
 	const [submit, setSubmit] = useState(false);
+	const [hashTag, setHashTag] = useState<string[]>([]);
+	const [mentions, setMentions] = useState<string[]>([]);
 
 	// Choose the mutation based on whether it's a post or a story
-	const [uploadFileMutation] = useMutation(
-		post ? CREATE_POST_MUTATION : CREATE_STORY_MUTATION
-	);
+	const [uploadPostMutation] = useMutation(CREATE_POST_MUTATION);
+	const [uploadStoryMutation] = useMutation(CREATE_STORY_MUTATION);
 
 	// refs
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -102,28 +105,58 @@ function Post({
 		async function submitContent() {
 			if (selectedFile) {
 				try {
-					const { data } = await uploadFileMutation({
-						variables: {
-							file: selectedFile,
-							caption,
-							location,
-							isPrivate: privatePost,
-						},
-					});
+					const { data } = post
+						? await uploadPostMutation({
+								variables: {
+									file: selectedFile,
+									caption,
+									location,
+									isPrivate: privatePost,
+								},
+						  })
+						: await uploadStoryMutation({
+								variables: {
+									file: selectedFile,
+									caption,
+									location,
+									hashTag,
+									mentions,
+								},
+						  });
 
 					if (data.createPost?.id || data.createStory?.id) {
 						setCreate(false); // Successfully posted or story created
+
+						notification.success({
+							message: post ? "Post Created!" : "Story Created!",
+							description: post
+								? "Your post has been successfully shared with your audience."
+								: "Your story has been successfully shared with your followers.",
+							duration: 3,
+						});
 					} else {
 						console.error("Error: Content creation failed");
+						notification.error({
+							message: "Content Creation Failed",
+							description:
+								"An error occurred while creating your content. Please try again.",
+							duration: 3,
+						});
 					}
 				} catch (error) {
 					console.error("Error while uploading file:", error);
+					notification.error({
+						message: "Upload Error",
+						description:
+							"An error occurred during file upload. Please check your connection and try again.",
+						duration: 3,
+					});
 				}
 			}
 		}
 
 		if (selectedFile && submit) {
-			console.log(selectedFile, submit)
+			console.log(selectedFile, submit);
 			submitContent();
 		}
 	}, [
@@ -132,7 +165,10 @@ function Post({
 		caption,
 		location,
 		privatePost,
-		uploadFileMutation,
+		hashTag,
+		mentions,
+		uploadPostMutation,
+		uploadStoryMutation,
 	]);
 
 	useEffect(() => {
@@ -163,7 +199,8 @@ function Post({
 			<div
 				className="flex w-full justify-center border-b p-3 font-bold text-white"
 				style={{ borderColor: "#3d3d3d" }}
-				ref={titleRef}>
+				ref={titleRef}
+			>
 				<div className="w-1/4"></div>
 				<div className="flex w-2/4 items-center justify-center">
 					Create new {post ? "post" : "story"}
@@ -183,7 +220,8 @@ function Post({
 			{/* content */}
 			<div
 				className={["flex", !selectedFile ? "aspect-square" : ""].join(" ")}
-				ref={contentRef}>
+				ref={contentRef}
+			>
 				<div className="relative flex aspect-square h-full w-full justify-center overflow-hidden">
 					{!selectedFile ? (
 						<div className="flex flex-col items-center justify-center space-y-3">
@@ -253,6 +291,22 @@ function Post({
 								Private
 							</Checkbox>
 						</div>
+						{!post && (
+							<>
+								<input
+									type="text"
+									placeholder="Add hashtags (comma-separated)"
+									className="border-none bg-transparent outline-none"
+									onChange={(e) => setHashTag(e.target.value.split(","))}
+								/>
+								<input
+									type="text"
+									placeholder="Mention people (comma-separated)"
+									className="border-none bg-transparent outline-none"
+									onChange={(e) => setMentions(e.target.value.split(","))}
+								/>
+							</>
+						)}
 					</div>
 				)}
 			</div>
