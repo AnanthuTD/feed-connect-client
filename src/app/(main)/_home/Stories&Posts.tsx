@@ -4,27 +4,24 @@ import Post from "./post/post";
 import Stories from "./stories/stories";
 import React from "react";
 import { PostsInterface } from "@/utils/Interfaces";
+import {GET_POSTS} from '@/graphql/queries'
 import axios from "@/lib/axios";
+import { useQuery } from "@apollo/client";
 
 function StoriesPosts() {
-	const [posts, setPosts] = useState<PostsInterface[] | undefined>(undefined);
-
+	const [posts, setPosts] = useState<PostsInterface[] | undefined>([]);
+	const [skip, setSkip] = useState(0)
+    const [hasMore, setHasMore] = useState(true)
+    const take = 10
+	const { data, loading, fetchMore } = useQuery(GET_POSTS, {
+        variables: { take, skip },
+    })
 	useEffect(() => {
-		async function fetchData() {
-			try {
-				const response = await axios.get("/api/post/allPost");
-				const data = response.data;
-				setPosts(data.posts);
-			} catch (error) {
-				console.error("Error during Axios request:", error);
-				console.error(
-					"An error occurred while fetching data. Please try again later."
-				);
-			}
-		}
-
-		fetchData();
-	}, []);
+        if (data?.getPosts?.posts) {
+            setPosts((prev) => [...prev, ...data.getPosts.posts])
+            setHasMore(data.getPosts.hasMore)
+        }
+    }, [data])
 
 	return (
 		<>
