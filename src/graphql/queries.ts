@@ -9,9 +9,13 @@ export const GET_POSTS = gql`
                 location
                 file
                 createdAt
+                likes {
+                    id
+                }
                 author {
                     id
-                    name
+                    username
+                    fullName
                 }
             }
             totalCount
