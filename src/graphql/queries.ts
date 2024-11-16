@@ -23,3 +23,24 @@ export const GET_POSTS = gql`
         }
     }
 `
+
+export const GET_STORIES = gql`
+    query GetStories($take: Int!, $skip: Int!) {
+        getStories(take: $take, skip: $skip) {
+            stories {
+                id
+                caption
+                fileUrl
+                location
+                hashTag
+                mentions
+                author {
+                    id
+                    name
+                }
+            }
+            totalCount
+            hasMore
+        }
+    }
+`

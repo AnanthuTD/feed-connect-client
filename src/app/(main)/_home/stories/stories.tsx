@@ -1,11 +1,10 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useQuery } from "@apollo/client";
+import { GET_STORIES } from "@/graphql/queries";
 import ArrowLeft from "./arrowLeft";
 import ArrowRight from "./arrowRight";
 import Rings from "@/app/components/rings";
 import View from "./popup";
-import { useEffect, useState } from "react";
-import { Story } from "@/utils/Interfaces";
-import axios from "@/lib/axios";
 
 function Stories() {
 	const [scrollLeft, setscrollLeft] = useState(false);
@@ -21,25 +20,27 @@ function Stories() {
 	const closePopup = () => {
 		setShowPopup(false);
 	};
+	const take = 8; // Number of stories to fetch per request
+    const [skip, setSkip] = useState(0); // Pagination skip value
+
+    // Fetch stories using GraphQL
+    const { data, loading, fetchMore } = useQuery(GET_STORIES, {
+        variables: { take, skip },
+        notifyOnNetworkStatusChange: true,
+    });
+	
 
 	useEffect(() => {
-		if (stories.length > 8) {
-			setscrollRight(true);
-		}
+        // Update stories when new data is fetched
+        if (data?.getStories?.stories) {
+            setStories((prevStories) => [...prevStories, ...data.getStories.stories]);
 
-		async function fetchStories() {
-			try {
-				const response = await axios.get("api/post/stories/");
-				const data = response.data;
-				setStories(data.stories);
-			} catch (error) {
-				console.error("Error during Axios request:", error);
-				// Handle the error here
-			}
-		}
-
-		fetchStories();
-	}, []);
+            // Manage scroll buttons
+            if (data.getStories.stories.length > 0) {
+                setscrollRight(data.getStories.hasMore);
+            }
+        }
+    }, [data]);
 
 	function handleClickRight() {
 		const container = document.getElementById("scroll-container");
@@ -48,14 +49,20 @@ function Stories() {
 		const scrollAmount = containerWidth / 2;
 
 		if (container && contentWidth - container.scrollLeft > containerWidth) {
-			container.scrollBy({ left: scrollAmount, behavior: "smooth" });
-			if (scrollLeft !== true) {
-				setscrollLeft(true);
-			}
-			if (contentWidth - container.scrollLeft === contentWidth) {
-				setscrollRight(false);
-			}
-		}
+            container.scrollBy({ left: scrollAmount, behavior: "smooth" });
+            setscrollLeft(true);
+
+            // Check if we need to fetch more stories
+            if (contentWidth - container.scrollLeft <= 2 * containerWidth && !loading) {
+                fetchMore({
+                    variables: { take, skip: stories.length },
+                });
+            }
+
+            if (contentWidth - container.scrollLeft === contentWidth) {
+                setscrollRight(false);
+            }
+        }
 	}
 
 	function handleClickLeft() {
@@ -65,67 +72,62 @@ function Stories() {
 		const scrollAmount = containerWidth / 2;
 
 		if (container && container.scrollLeft !== 0) {
-			container.scrollBy({ left: -scrollAmount, behavior: "smooth" });
-			if (scrollRight !== true) {
-				setscrollRight(true);
-			}
+            container.scrollBy({ left: -scrollAmount, behavior: "smooth" });
+            setscrollRight(true);
 
-			if (container.scrollLeft + containerWidth >= contentWidth) {
-				setscrollLeft(false);
-			}
-		}
+            if (container.scrollLeft <= scrollAmount) {
+                setscrollLeft(false);
+            }
+        }
 	}
 
 	return (
-		<>
-			<div className="relative flex h-fit w-full">
-				{/* scroll left */}
-				{scrollLeft ? (
-					<div
-						className="hidden lg:flex absolute bottom-0 left-5 top-0 z-10 cursor-pointer items-center"
-						onClick={() => {
-							handleClickLeft();
-						}}
-					>
-						{stories.length > 8 ? <ArrowLeft /> : null}
-					</div>
-				) : null}
-				{/* stories */}
-				<div
-					className="overflow-y-hidden overflow-x-scroll no-scrollbar pointer-events-auto h-fit m-w-[685px]"
-					id="scroll-container"
-				>
-					<div className="flex" style={{ height: "fit-content" }}>
-						{stories.map((story) => {
-							return (
-								<React.Fragment key={`RingKey${story.user_id}`}>
-									<Rings
-										key={`RingKey${story.user_id}`}
-										avatar={"api/" + story.profile_img}
-										onClick={() => openPopup()}
-									/>
-									<div className="px-2"></div>
-								</React.Fragment>
-							);
-						})}
-					</div>
-				</div>
-				{/* more stories... */}
-				{scrollRight ? (
-					<div
-						className="hidden lg:flex absolute bottom-0 right-5 top-0 z-10 cursor-pointer items-center"
-						onClick={() => {
-							handleClickRight();
-						}}
-					>
-						{stories.length > 8 ? <ArrowRight /> : null}
-					</div>
-				) : null}
-			</div>
-			{/* Render the popup */}
-			{showPopup && <View stories={stories} onClose={closePopup} />}
-		</>
-	);
+        <>
+            <div className="relative flex h-fit w-full">
+                {/* Scroll Left */}
+                {scrollLeft && (
+                    <div
+                        className="hidden lg:flex absolute bottom-0 left-5 top-0 z-10 cursor-pointer items-center"
+                        onClick={handleClickLeft}
+                    >
+                        <ArrowLeft />
+                    </div>
+                )}
+
+                {/* Stories Container */}
+                <div
+                    className="overflow-y-hidden overflow-x-scroll no-scrollbar pointer-events-auto h-fit m-w-[685px]"
+                    id="scroll-container"
+                >
+                    <div className="flex" style={{ height: "fit-content" }}>
+                        {stories.map((story) => (
+                            <React.Fragment key={`RingKey${story.id}`}>
+                                <Rings
+                                    avatar={story.fileUrl}
+                                    onClick={openPopup}
+                                    key={`RingKey${story.id}`}
+                                />
+                                <div className="px-2"></div>
+                            </React.Fragment>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Scroll Right */}
+                {scrollRight && (
+                    <div
+                        className="hidden lg:flex absolute bottom-0 right-5 top-0 z-10 cursor-pointer items-center"
+                        onClick={handleClickRight}
+                    >
+                        <ArrowRight />
+                    </div>
+                )}
+            </div>
+
+            {/* Popup */}
+            {showPopup && <View stories={stories} onClose={closePopup} />}
+        </>
+    );
 }
 
 export default Stories;
