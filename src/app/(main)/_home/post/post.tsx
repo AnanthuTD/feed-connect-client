@@ -46,8 +46,7 @@ function Post({ post }: { post: PostsInterface }) {
 					const rect = videoRef.current.getBoundingClientRect();
 					const containerRect = container.getBoundingClientRect();
 					const center = container.offsetHeight / 2;
-					const elementTop =
-						rect.top - containerRect.top + rect.height / 2;
+					const elementTop = rect.top - containerRect.top + rect.height / 2;
 					const isCentered =
 						Math.abs(center - elementTop) < container.offsetHeight / 4;
 					setPlayVideo(isCentered);
@@ -198,7 +197,7 @@ function Post({ post }: { post: PostsInterface }) {
 								}}
 							></span>
 							<span className="text-xs" style={{ color: "gray" }}>
-								{timeDifference(currentPost.time_stamp)}
+								{timeDifference(currentPost.createdAt)}
 							</span>
 							<span
 								className="rounded-full"
@@ -223,29 +222,28 @@ function Post({ post }: { post: PostsInterface }) {
 					</div>
 
 					{/* post */}
-					<div className="relative mt-2 flex h-full justify-center overflow-hidden lg:rounded-lg">
+					<div className="relative mt-2 flex h-full items-center justify-center overflow-hidden lg:rounded-lg">
 						{isImageFile(currentPost.file) ? (
 							<Image
-								src={`/api/media/${currentPost.file}`}
+								src={`${currentPost.file}`}
 								alt="not found"
-								className="h-full"
+								className="object-contain"
 								style={{
-									maxWidth: "max-content",
-									maxHeight: "max-content",
-									objectFit: "cover",
+									maxWidth: "100%",
+									maxHeight: "100%",
 								}}
 								fill={true}
 							/>
 						) : null}
 						{isVideoFile(currentPost.file) ? (
 							<video
-								src={`api/media/${currentPost.file}`}
+								src={`${currentPost.file}`}
 								controls={false}
 								muted={true}
-								className="h-full"
+								className="object-contain"
 								style={{
-									maxWidth: "max-content",
-									maxHeight: "max-content",
+									maxWidth: "100%",
+									maxHeight: "100%",
 								}}
 								ref={videoRef}
 							></video>
@@ -260,10 +258,7 @@ function Post({ post }: { post: PostsInterface }) {
 								<Heart className="cursor-pointer" like={like} />
 							</div>
 							<div onClick={() => setComments(true)}>
-								<CommentIcon
-									stroke="white"
-									className="cursor-pointer"
-								/>
+								<CommentIcon stroke="white" className="cursor-pointer" />
 								{comments ? (
 									<Comments
 										post_id={currentPost.id}
@@ -300,10 +295,7 @@ function Post({ post }: { post: PostsInterface }) {
 								>
 									{currentPost.likes.length - 1} others
 									{likes ? (
-										<Likes
-											setLikes={setLikes}
-											users={currentPost.likes}
-										/>
+										<Likes setLikes={setLikes} users={currentPost.likes} />
 									) : null}
 								</span>
 							</>
