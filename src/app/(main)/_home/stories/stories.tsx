@@ -1,13 +1,10 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useQuery } from "@apollo/client";
+import { GET_STORIES } from "@/graphql/queries";
 import ArrowLeft from "./arrowLeft";
 import ArrowRight from "./arrowRight";
 import Rings from "@/app/components/rings";
 import View from "./popup";
-import { useEffect, useState } from "react";
-import { Story } from "@/utils/Interfaces";
-import axios from "@/lib/axios";
-import { useQuery } from '@apollo/client'
-import { GET_STORIES } from '@/graphql/queries'
 
 function Stories() {
 	const [scrollLeft, setscrollLeft] = useState(false);
