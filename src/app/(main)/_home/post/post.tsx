@@ -16,15 +16,18 @@ import { useUserContext } from "@/app/components/context/userContext";
 import timeDifference from "@/utils/time_difference";
 import { isImageFile, isVideoFile } from "@/utils/video_or_image";
 import Image from "next/image";
+import ColorThief from "colorthief";
 
 function Post({ post }: { post: PostsInterface }) {
 	const [comment, setComment] = useState("");
 	const [like, setLike] = useState(false);
 	const [saved, setSaved] = useState(false);
-	const [currentPost, setCurrentPost] = useState(post);
+	const [currentPost] = useState(post);
 	const [likes, setLikes] = useState(false);
 	const [comments, setComments] = useState(false);
 	const [playVideo, setPlayVideo] = useState(false);
+	const [backgroundColor, setBackgroundColor] = useState("black"); // Default background color
+	const imageRef = useRef<HTMLImageElement>(null); // Ref for the image
 
 	const router = useRouter();
 	const { user } = useUserContext();
@@ -46,8 +49,7 @@ function Post({ post }: { post: PostsInterface }) {
 					const rect = videoRef.current.getBoundingClientRect();
 					const containerRect = container.getBoundingClientRect();
 					const center = container.offsetHeight / 2;
-					const elementTop =
-						rect.top - containerRect.top + rect.height / 2;
+					const elementTop = rect.top - containerRect.top + rect.height / 2;
 					const isCentered =
 						Math.abs(center - elementTop) < container.offsetHeight / 4;
 					setPlayVideo(isCentered);
@@ -145,6 +147,36 @@ function Post({ post }: { post: PostsInterface }) {
 		console.log("hi");
 	}
 
+	// Extract the dominant color using Color Thief
+	const extractColor = () => {
+		const colorThief = new ColorThief();
+		if (isImageFile(currentPost.file) && imageRef.current) {
+			imageRef.current.onload = () => {
+				const color = colorThief.getColor(imageRef.current!);
+				setBackgroundColor(`rgb(${color.join(",")})`);
+			};
+		} else if (isVideoFile(currentPost.file) && videoRef.current) {
+			const canvas = document.createElement("canvas");
+			const ctx = canvas.getContext("2d");
+			canvas.width = videoRef.current.videoWidth;
+			canvas.height = videoRef.current.videoHeight;
+
+			videoRef.current.addEventListener("play", () => {
+				ctx?.drawImage(videoRef.current!, 0, 0, canvas.width, canvas.height);
+				const frameData = ctx?.getImageData(0, 0, canvas.width, canvas.height);
+				if (frameData) {
+					const color = colorThief.getColorFromImageData(frameData);
+					setBackgroundColor(`rgb(${color.join(",")})`);
+				}
+			});
+		}
+	};
+
+	// Run color extraction when post file changes
+	useEffect(() => {
+		extractColor();
+	}, [currentPost.file]);
+
 	return (
 		<>
 			<div
@@ -198,7 +230,7 @@ function Post({ post }: { post: PostsInterface }) {
 								}}
 							></span>
 							<span className="text-xs" style={{ color: "gray" }}>
-								{timeDifference(currentPost.time_stamp)}
+								{timeDifference(currentPost.createdAt)}
 							</span>
 							<span
 								className="rounded-full"
@@ -223,35 +255,38 @@ function Post({ post }: { post: PostsInterface }) {
 					</div>
 
 					{/* post */}
-					<div className="relative mt-2 flex h-full justify-center overflow-hidden lg:rounded-lg">
+					<div
+						className="relative mt-2 flex h-full items-center justify-center overflow-hidden lg:rounded-lg" 
+						style={{ backgroundColor }}
+					>
 						{isImageFile(currentPost.file) ? (
 							<Image
-								src={`/api/media/${currentPost.file}`}
+								src={`${currentPost.file}`}
 								alt="not found"
-								className="h-full"
+								ref={imageRef}
+								className="object-contain"
 								style={{
-									maxWidth: "max-content",
-									maxHeight: "max-content",
-									objectFit: "cover",
+									maxWidth: "100%",
+									maxHeight: "100%",
 								}}
 								fill={true}
 							/>
-						) : null}
-						{isVideoFile(currentPost.file) ? (
+						) : isVideoFile(currentPost.file) ? (
 							<video
-								src={`api/media/${currentPost.file}`}
+								src={`${currentPost.file}`}
 								controls={false}
 								muted={true}
-								className="h-full"
+								className="object-contain"
 								style={{
-									maxWidth: "max-content",
-									maxHeight: "max-content",
+									maxWidth: "100%",
+									maxHeight: "100%",
 								}}
 								ref={videoRef}
 							></video>
 						) : null}
 					</div>
 				</div>
+				{/* Other Post Details */}
 				<div className="p-2"></div>
 				<footer className="w-full space-y-2">
 					<div className="flex items-center justify-between h-fit">
@@ -260,10 +295,7 @@ function Post({ post }: { post: PostsInterface }) {
 								<Heart className="cursor-pointer" like={like} />
 							</div>
 							<div onClick={() => setComments(true)}>
-								<CommentIcon
-									stroke="white"
-									className="cursor-pointer"
-								/>
+								<CommentIcon stroke="white" className="cursor-pointer" />
 								{comments ? (
 									<Comments
 										post_id={currentPost.id}
@@ -300,10 +332,7 @@ function Post({ post }: { post: PostsInterface }) {
 								>
 									{currentPost.likes.length - 1} others
 									{likes ? (
-										<Likes
-											setLikes={setLikes}
-											users={currentPost.likes}
-										/>
+										<Likes setLikes={setLikes} users={currentPost.likes} />
 									) : null}
 								</span>
 							</>
