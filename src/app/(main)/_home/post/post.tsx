@@ -16,15 +16,18 @@ import { useUserContext } from "@/app/components/context/userContext";
 import timeDifference from "@/utils/time_difference";
 import { isImageFile, isVideoFile } from "@/utils/video_or_image";
 import Image from "next/image";
+import ColorThief from "colorthief";
 
 function Post({ post }: { post: PostsInterface }) {
 	const [comment, setComment] = useState("");
 	const [like, setLike] = useState(false);
 	const [saved, setSaved] = useState(false);
-	const [currentPost, setCurrentPost] = useState(post);
+	const [currentPost] = useState(post);
 	const [likes, setLikes] = useState(false);
 	const [comments, setComments] = useState(false);
 	const [playVideo, setPlayVideo] = useState(false);
+	const [backgroundColor, setBackgroundColor] = useState("black"); // Default background color
+	const imageRef = useRef<HTMLImageElement>(null); // Ref for the image
 
 	const router = useRouter();
 	const { user } = useUserContext();
@@ -144,6 +147,36 @@ function Post({ post }: { post: PostsInterface }) {
 		console.log("hi");
 	}
 
+	// Extract the dominant color using Color Thief
+	const extractColor = () => {
+		const colorThief = new ColorThief();
+		if (isImageFile(currentPost.file) && imageRef.current) {
+			imageRef.current.onload = () => {
+				const color = colorThief.getColor(imageRef.current!);
+				setBackgroundColor(`rgb(${color.join(",")})`);
+			};
+		} else if (isVideoFile(currentPost.file) && videoRef.current) {
+			const canvas = document.createElement("canvas");
+			const ctx = canvas.getContext("2d");
+			canvas.width = videoRef.current.videoWidth;
+			canvas.height = videoRef.current.videoHeight;
+
+			videoRef.current.addEventListener("play", () => {
+				ctx?.drawImage(videoRef.current!, 0, 0, canvas.width, canvas.height);
+				const frameData = ctx?.getImageData(0, 0, canvas.width, canvas.height);
+				if (frameData) {
+					const color = colorThief.getColorFromImageData(frameData);
+					setBackgroundColor(`rgb(${color.join(",")})`);
+				}
+			});
+		}
+	};
+
+	// Run color extraction when post file changes
+	useEffect(() => {
+		extractColor();
+	}, [currentPost.file]);
+
 	return (
 		<>
 			<div
@@ -222,11 +255,15 @@ function Post({ post }: { post: PostsInterface }) {
 					</div>
 
 					{/* post */}
-					<div className="relative mt-2 flex h-full items-center justify-center overflow-hidden lg:rounded-lg">
+					<div
+						className="relative mt-2 flex h-full items-center justify-center overflow-hidden lg:rounded-lg" 
+						style={{ backgroundColor }}
+					>
 						{isImageFile(currentPost.file) ? (
 							<Image
 								src={`${currentPost.file}`}
 								alt="not found"
+								ref={imageRef}
 								className="object-contain"
 								style={{
 									maxWidth: "100%",
@@ -234,8 +271,7 @@ function Post({ post }: { post: PostsInterface }) {
 								}}
 								fill={true}
 							/>
-						) : null}
-						{isVideoFile(currentPost.file) ? (
+						) : isVideoFile(currentPost.file) ? (
 							<video
 								src={`${currentPost.file}`}
 								controls={false}
@@ -250,6 +286,7 @@ function Post({ post }: { post: PostsInterface }) {
 						) : null}
 					</div>
 				</div>
+				{/* Other Post Details */}
 				<div className="p-2"></div>
 				<footer className="w-full space-y-2">
 					<div className="flex items-center justify-between h-fit">
