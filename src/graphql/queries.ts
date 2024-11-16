@@ -40,3 +40,24 @@ export const GET_STORIES = gql`
         }
     }
 `
+
+export const TOGGLE_LIKE = gql`
+    mutation ToggleLike($postId: String!) {
+        toggleLike(postId: $postId)
+    }
+`;
+
+export const GET_POST_LIKES = gql`
+    query GetPostLikes($postId: String!) {
+        getPostLikes(postId: $postId) {
+            id
+            user {
+                id
+                username
+                first_name
+                last_name
+                profile_img
+            }
+        }
+    }
+`;
