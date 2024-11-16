@@ -106,7 +106,7 @@ export const LazyLoad: React.FC<PropType> = (props) => {
 						" "
 					)}
 					alt="unable to load image"
-					src={inView ? file : ""}
+					src={inView ? file : null}
 					onLoad={setLoaded}
 					width={500}
 					height={500}
@@ -117,7 +117,7 @@ export const LazyLoad: React.FC<PropType> = (props) => {
 
 			{isVideoFile(file) ? (
 				<video
-					src={inView ? file : ""}
+					src={inView ? file : null}
 					controls={false}
 					onLoad={setLoaded}
 					muted={false}

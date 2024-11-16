@@ -11,6 +11,7 @@ import {
 } from "antd";
 import { CloseOutlined } from "@ant-design/icons";
 import Link from "next/link";
+import axiosInstance from "@/lib/axios";
 
 const { Search: AntdSearch } = Input;
 const { Title, Text } = Typography;
@@ -40,9 +41,9 @@ const SearchModal: React.FC<{ visible: boolean; onClose: () => void }> = ({
 
 	const fetchRecentSearches = async () => {
 		try {
-			const response = await fetch("/api/recent-searches");
-			const data = await response.json();
-			setRecentSearches(data);
+			const response = await axiosInstance.get("/api/recent-searches");
+			const { data } = response;
+			setRecentSearches(data || "");
 		} catch (error) {
 			console.error("Error fetching recent searches:", error);
 		}
@@ -52,9 +53,8 @@ const SearchModal: React.FC<{ visible: boolean; onClose: () => void }> = ({
 		try {
 			setSearchText(value);
 			if (value.trim() !== "") {
-				const response = await fetch(`/api/search?query=${value}`);
-				const data = await response.json();
-				setSearchResults(data.results);
+				const { data } = await axiosInstance.get(`/api/search?query=${value}`);
+				setSearchResults(data.results.length ? data.results : []);
 			} else {
 				setSearchResults([]);
 			}
@@ -106,9 +106,7 @@ const SearchModal: React.FC<{ visible: boolean; onClose: () => void }> = ({
 					)}
 				</Row>
 				<List
-					dataSource={
-						searchText.trim() === "" ? recentSearches : searchResults
-					}
+					dataSource={searchText.trim() === "" ? recentSearches : searchResults}
 					renderItem={(item: SearchResult, index: number) => {
 						const url =
 							item.type === "profile"
@@ -134,15 +132,11 @@ const SearchModal: React.FC<{ visible: boolean; onClose: () => void }> = ({
 										<div className="mx-2"></div>
 										<Text className="text-sm">{item?.hashtag}</Text>
 										{item.type !== "profile" && (
-											<Text className="text-sm">
-												Posts: {item.total_posts}
-											</Text>
+											<Text className="text-sm">Posts: {item.total_posts}</Text>
 										)}
 										<div className="flex flex-col">
 											{item.type === "profile" ? (
-												<Text className="text-xs">
-													{`${item.username}`}
-												</Text>
+												<Text className="text-xs">{`${item.username}`}</Text>
 											) : null}
 											{item.first_name && item.last_name && (
 												<Text type="secondary" className="text-xs">
@@ -154,9 +148,7 @@ const SearchModal: React.FC<{ visible: boolean; onClose: () => void }> = ({
 											<Button
 												type="text"
 												icon={<CloseOutlined />}
-												onClick={() =>
-													handleClearRecentSearch(index)
-												}
+												onClick={() => handleClearRecentSearch(index)}
 											/>
 										)}
 									</Row>
