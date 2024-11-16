@@ -36,7 +36,8 @@ export const GET_STORIES = gql`
                 mentions
                 author {
                     id
-                    name
+                    username
+                    fullName
                 }
             }
             totalCount
