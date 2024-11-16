@@ -106,7 +106,7 @@ const EmblaCarousel: React.FC<PropType> = (props) => {
 									? tweenValues[index]
 									: undefined,
 							}}>
-							<ArrowDotSlide stories={story.stories} key={story.user_id} />
+							<ArrowDotSlide stories={[{story: `${story.fileUrl}`, story_id: story.fileUrl}]} key={story.user_id} />
 						</div>
 					))}
 				</div>

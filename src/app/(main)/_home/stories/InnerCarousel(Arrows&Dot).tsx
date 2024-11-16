@@ -14,8 +14,7 @@ type PropType = {
 	options?: EmblaOptionsType;
 };
 
-const EmblaCarousel: React.FC<PropType> = (props) => {
-	const { stories, options } = props;
+const EmblaCarousel: React.FC<PropType> = ({stories = [], options}) => {
 	const [emblaRef, emblaApi] = useEmblaCarousel({ watchDrag: false });
 	const [prevBtnEnabled, setPrevBtnEnabled] = useState(false);
 	const [nextBtnEnabled, setNextBtnEnabled] = useState(false);
@@ -125,7 +124,7 @@ const EmblaCarousel: React.FC<PropType> = (props) => {
 								<LazyLoad
 									key={story.story_id}
 									index={index}
-									file={`/api${story.story}`}
+									file={`${story.story}`}
 									inView={slidesInView.indexOf(index) > -1}
 									isInView={isInView}
 									getProgress={setProgress}
