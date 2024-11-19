@@ -34,9 +34,6 @@ function Message({
 
 	const handleUnsend = async () => {
 		try {
-			console.log("====================================");
-			console.log('chat:', chat);
-			console.log("====================================");
 			const csrfToken = await fetchCSRF();
 
 			const response = await axios.delete("/api/chat/unsend/", {
@@ -123,13 +120,13 @@ function Message({
 						].join(" ")}
 						style={{ overflowWrap: "anywhere" }}
 					>
-						<p>{chat.message}</p>
+						<p>{chat.content}</p>
 					</div>
 				</div>
 				{displayTime && (
 					<div className="mt-3 flex w-full flex-row-reverse pr-3">
 						<span className="h-fit w-fit text-xs text-secondryText">
-							{getTime(chat.timestamp)}
+							{getTime(chat.createdAt)}
 						</span>
 					</div>
 				)}

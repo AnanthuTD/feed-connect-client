@@ -75,8 +75,8 @@ export interface OtherUserProfile {
 
 export interface Chat {
 	message: string;
-	timestamp: Date;
-	sender_username: string;
+	createdAt: Date;
+	senderId: string;
 	id: number;
 }
 

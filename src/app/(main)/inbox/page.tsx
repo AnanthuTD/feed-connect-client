@@ -1,15 +1,15 @@
 "use client";
+import React, { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useUserContext } from "@/app/components/context/userContext";
+import ArrowLeft from "@/app/components/icons/ArrowLeft";
+import { gql, useQuery } from "@apollo/client";
 import CreateMessage from "./_components/create";
 import DropDown from "./_components/dropdown";
 import AccountMessage from "./_components/accountMessage";
-import React, { useEffect, useRef, useState } from "react";
 import ChatBox from "./_components/chatBox";
-import { useSearchParams } from "next/navigation";
-import { OtherUserProfile } from "@/utils/Interfaces";
-import { useUserContext } from "@/app/components/context/userContext";
-import ArrowLeft from "@/app/components/icons/ArrowLeft";
-import axios from "@/lib/axios";
 import SearchAccounts from "./_components/searchAccounts";
+import { GET_CONVERSATIONS, GET_PROFILE_BY_ID } from "@/graphql/queries";
 
 interface conversations {
 	last_message: string;
@@ -37,85 +37,39 @@ function Messages() {
 	const titleRef = useRef<HTMLDivElement>(null);
 	const contentRef = useRef<HTMLDivElement>(null);
 
+	// Fetch user profile using GraphQL
+	const { data: profileData, error: profileError } = useQuery(GET_PROFILE_BY_ID, {
+		variables: { id_user },
+		skip: !id_user, // Skip if no user id
+	});
+
+	// Fetch conversations using GraphQL
+	const { data: conversationsData, error: conversationsError } =
+		useQuery(GET_CONVERSATIONS);
+
 	useEffect(() => {
-		async function fetchProfile() {
-			try {
-				const response = await axios.get(
-					`/api/accounts/get_profile/${id_user}/`
+		if (profileData) {
+			setProfile(profileData.getProfile);
+		}
+	}, [profileData]);
+
+	useEffect(() => {
+		if (conversationsData) {
+			const tempConversations = conversationsData.conversations;
+			if (profile) {
+				const foundIndex = tempConversations.findIndex(
+					(conversation) => conversation.username === profile.username
 				);
-				const data = response.data;
-
-				if (data.status) {
-					setProfile(data.profile);
+				if (foundIndex !== -1) {
+					const foundConversation = tempConversations.splice(foundIndex, 1)[0];
+					setConversations([foundConversation, ...tempConversations]);
 				}
-			} catch (error) {
-				console.error("Error during Axios request:", error);
-				// Handle the error here
+			} else {
+				setConversations(tempConversations);
 			}
+			setSelectedChat(profile?.username || tempConversations[0]?.username);
 		}
-
-		if (id_user) {
-			fetchProfile();
-		}
-	}, [id_user]);
-
-	useEffect(() => {
-		const fetchConversations = async () => {
-			try {
-				if (profile) {
-					// Set up initial conversation with user's own profile
-					setConversations([
-						{
-							username: profile.username,
-							profile_img: profile.profile_img,
-							last_message: "",
-						},
-					]);
-				}
-
-				if (!profile || (!id_user && profile)) {
-					// Fetch all conversations
-					const response = await axios.get<{
-						conversations: conversations[];
-						message: string;
-						status: boolean;
-					}>("/api/chat/conversations/");
-
-					const tempConversations = response.data.conversations;
-
-					// If profile exists, find and move its conversation to the top
-					if (profile) {
-						const foundIndex = tempConversations.findIndex(
-							(conversation) =>
-								conversation.username === profile.username
-						);
-						if (foundIndex !== -1) {
-							const foundConversation = tempConversations.splice(
-								foundIndex,
-								1
-							)[0];
-							setConversations([
-								foundConversation,
-								...tempConversations,
-							]);
-						}
-					} else {
-						// Add all conversations if profile doesn't exist
-						setConversations(tempConversations);
-					}
-
-					// Set selected chat to profile's username or the first conversation
-					setSelectedChat(
-						profile?.username || tempConversations[0]?.username
-					);
-				}
-			} catch (error) {
-				console.error("Error during Axios request:", error);
-			}
-		};
-
-		fetchConversations();
-	}, [profile]);
+	}, [profile, conversationsData]);
 
 	useEffect(() => {
 		function updateContentHeight() {
@@ -144,7 +98,7 @@ function Messages() {
 		return () => {
 			observer.disconnect();
 		};
-	}, [contentRef.current]); // trigger useEffect when this exist
+	}, [contentRef.current]);
 
 	function updateVisibility() {
 		if (!chatsRef.current || !conversationsRef.current) return;
@@ -184,9 +138,7 @@ function Messages() {
 			{/* top */}
 			<div className="flex border-b border-border_grey" ref={titleRef}>
 				<div className="flex w-1/6 items-center justify-center">
-					{/* <Link href={"/inbox"} className="lg:hidden"> */}
-					<ArrowLeft className="lg:hidden" onClick={handleBack} />{" "}
-					{/* </Link> */}
+					<ArrowLeft className="lg:hidden" onClick={handleBack} />
 				</div>
 				<div className="flex w-4/6 justify-center gap-1 p-4 font-bold">
 					<span>{user?.username}</span>
@@ -198,13 +150,13 @@ function Messages() {
 				>
 					<CreateMessage stroke="white" className="cursor-pointer" />
 				</div>
-				{isOpenUserSearchBox ? (
+				{isOpenUserSearchBox && (
 					<SearchAccounts
 						onCancel={() => {
 							setIsOpenUserSearchBox(false);
 						}}
 					/>
-				) : null}
+				)}
 			</div>
 			<div className="flex h-full" ref={contentRef}>
 				<div
@@ -215,33 +167,32 @@ function Messages() {
 					<div className="h-full overflow-y-auto">
 						{conversations.map(
 							(
-								user: {
-									username: React.Key | null | undefined;
-									profile_img: URL;
-									last_message: string | undefined;
-								},
+								conversation,
 								index: any
-							) => (
-								<>
-									<AccountMessage
-										username={user.username}
-										profile_img={user.profile_img}
-										last_message={user.last_message}
-										setSelectChat={setSelectedChat}
-										width={60}
-										height={60}
-										key={user.username}
-										onClick={updateVisibility}
-									/>
-								</>
-							)
+							) => {
+								const [otherUser] = conversation.participants.filter(
+									({ id }) => id !== user.id
+								);
+								return (
+										<AccountMessage
+											username={otherUser.username}
+											profile_img={otherUser.avatar || ''}
+											last_message={conversation.lastMessage?.content}
+											setSelectChat={setSelectedChat}
+											width={60}
+											height={60}
+											key={otherUser.username}
+											onClick={updateVisibility}
+											userId={otherUser.id}
+										/>
+								);
+							}
 						)}
 					</div>
 				</div>
 
 				<div
-					className="hidden h-full w-full lg:block lg:w-3/5"
-					ref={chatsRef}
+					className="hidden h-full w-full lg:block lg:w-3/5" /* ref={chatsRef} */
 				>
 					{selectedChat ? <ChatBox recipient={selectedChat} /> : null}
 				</div>

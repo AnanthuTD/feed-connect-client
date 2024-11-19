@@ -9,6 +9,7 @@ interface AccountMessageProps {
 	last_message?: string;
 	setSelectChat: Dispatch<SetStateAction<string>>;
 	onClick?: () => void;
+	userId: string | null;
 }
 function AccountMessage({
 	width = 40,
@@ -18,19 +19,21 @@ function AccountMessage({
 	last_message,
 	setSelectChat,
 	onClick,
+	userId = null,
 }: AccountMessageProps) {
 	return (
 		<>
 			<div
 				className="m-4 my-3 flex cursor-pointer items-center justify-between"
 				onClick={() => {
-					setSelectChat(username);
+					setSelectChat(userId);
 					onClick ? onClick() : null;
-				}}>
+				}}
+			>
 				<div className="w-1/5">
 					<Image
 						priority={true}
-						src={"/api" + profile_img}
+						src={`${profile_img}`}
 						width={width}
 						height={height}
 						alt=""
@@ -45,7 +48,8 @@ function AccountMessage({
 					<div className="overflow-hidden overflow-ellipsis">
 						<span
 							className="text-md mx-4 items-center overflow-hidden overflow-ellipsis"
-							style={{ color: "rgb(168, 168, 168)" }}>
+							style={{ color: "rgb(168, 168, 168)" }}
+						>
 							{last_message}
 						</span>
 					</div>
