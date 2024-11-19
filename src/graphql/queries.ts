@@ -1,5 +1,16 @@
 import { gql } from '@apollo/client'
 
+export const GET_PROFILE = gql`
+	query GetProfile {
+		user {
+			fullName
+			username
+			avatar
+			id
+		}
+	}
+`;
+
 export const GET_POSTS = gql`
     query GetPosts($take: Int!, $skip: Int!) {
         getPosts(take: $take, skip: $skip) {
@@ -85,7 +96,7 @@ export const SUBSCRIBE_MESSAGE = gql`
 	}
 `;
 
-export const GET_PROFILE = gql`
+export const GET_PROFILE_BY_ID = gql`
 	query GetProfile($id_user: ID!) {
 		getProfile(id_user: $id_user) {
 			username

@@ -4,16 +4,7 @@ import { UserState } from "../../../utils/Interfaces";
 import { useRouter } from "next/navigation";
 import Loading from "@/app/loading"; // Import the Loading component
 import { gql, useQuery } from "@apollo/client";
-
-const GET_PROFILE = gql`
-	query GetProfile {
-		user {
-			fullName
-			username
-			avatar
-		}
-	}
-`;
+import { GET_PROFILE } from "@/graphql/queries";
 
 // Define the interface for context value
 interface UserContextInterface {
