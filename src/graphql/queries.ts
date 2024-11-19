@@ -45,3 +45,67 @@ export const GET_STORIES = gql`
         }
     }
 `
+
+export const FETCH_MESSAGES = gql`
+	query Messages($receiverId: String!, $take: Int, $skip: Int) {
+		getMessages(receiverId: $receiverId, take: $take, skip: $skip) {
+			messages {
+				id
+				content
+				senderId
+				conversationId
+				createdAt
+			}
+			hasMore
+		}
+	}
+`;
+
+export const SEND_MESSAGE = gql`
+	mutation SendMessage($receiverId: String!, $content: String!) {
+		sendMessage(receiverId: $receiverId, content: $content) {
+			id
+			content
+			senderId
+			conversationId
+			createdAt
+		}
+	}
+`;
+
+export const SUBSCRIBE_MESSAGE = gql`
+	subscription MessageSubscription {
+		MessageSubscription {
+			id
+			content
+			senderId
+			conversationId
+			createdAt
+		}
+	}
+`;
+
+export const GET_PROFILE = gql`
+	query GetProfile($id_user: ID!) {
+		getProfile(id_user: $id_user) {
+			username
+			profile_img
+		}
+	}
+`;
+
+export const GET_CONVERSATIONS = gql`
+	query GetConversations {
+		conversations {
+			lastMessage {
+				content
+			}
+			participants {
+				username
+				avatar
+				fullName
+				id
+			}
+		}
+	}
+`;
