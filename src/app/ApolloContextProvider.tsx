@@ -4,42 +4,35 @@ import {
 	ApolloClient,
 	InMemoryCache,
 	ApolloProvider,
-	HttpLink,
 	from,
 	ApolloLink,
 	Observable,
+	split,
 } from "@apollo/client";
 import { setContext } from "@apollo/client/link/context";
 import { onError } from "@apollo/client/link/error";
+import { getMainDefinition } from "@apollo/client/utilities";
 import axios from "axios";
 import createUploadLink from "apollo-upload-client/createUploadLink.mjs";
 import promiseToObservable from "@/utils/promiseToObservable";
+import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
+import { createClient } from "graphql-ws";
 
-const httpLink = new HttpLink({ uri: "/api/graphql" });
-
-// Track token refresh state and queue requests
+// Token refresh logic
 let isRefreshing = false;
 let refreshSubscribers: ((token: string) => void)[] = [];
 
-// Queue requests during token refresh
 const subscribeTokenRefresh = (callback: (token: string) => void) => {
 	refreshSubscribers.push(callback);
 };
 
-// Call subscribers after a new access token is obtained
 const onTokenRefreshed = (newAccessToken: string) => {
-	/* 
-	 * Somehow the onError handler is called multiple times for a req. 
-	 * ( for now its happening only for the first req, haven't checked the other cases. ) 
-	 * so to solve it just skipping the first one.
-	*/
 	refreshSubscribers.forEach((callback, index) => {
 		if (index !== 0) callback(newAccessToken);
 	});
 	refreshSubscribers = [];
 };
 
-// Function to refresh the access token
 const refreshAccessToken = async (): Promise<string> => {
 	try {
 		const response = await axios.post("/api/auth/refresh-token");
@@ -55,7 +48,7 @@ const refreshAccessToken = async (): Promise<string> => {
 	}
 };
 
-// Set up request headers with access token from session storage
+// Authorization Link
 const authLink = setContext(async (_, { headers }) => {
 	const accessToken = sessionStorage.getItem("accessToken");
 	return {
@@ -66,20 +59,18 @@ const authLink = setContext(async (_, { headers }) => {
 	};
 });
 
-// Handle errors like 401 and manage token refresh logic
+// Error Handling Link
 const errorLink = onError(
 	({ graphQLErrors, networkError, operation, forward }) => {
 		if (graphQLErrors) {
 			for (const err of graphQLErrors) {
 				if (err?.extensions?.code === "UNAUTHENTICATED") {
-					// If not already refreshing, start token refresh
 					if (!isRefreshing) {
 						isRefreshing = true;
 						const refreshPromise = refreshAccessToken();
 
 						return promiseToObservable(refreshPromise).flatMap(
 							(newAccessToken) => {
-								// Update the request with the new token
 								operation.setContext(({ headers = {} }) => ({
 									headers: {
 										...headers,
@@ -93,7 +84,6 @@ const errorLink = onError(
 						);
 					}
 
-					// Queue requests until the token refresh completes
 					return new Observable((observer) => {
 						subscribeTokenRefresh((newAccessToken) => {
 							operation.setContext(({ headers = {} }) => ({
@@ -115,18 +105,41 @@ const errorLink = onError(
 	}
 );
 
+// HTTP Link
+const httpLink = createUploadLink({
+	uri: "/api/graphql",
+	headers: {
+		"Apollo-Require-Preflight": "true",
+	},
+}) as unknown as ApolloLink;
+
+// WebSocket Link for Subscriptions
+const wsLink = new GraphQLWsLink(
+	createClient({
+		url: `ws://localhost:3000/graphql`,
+		connectionParams: {
+			authToken: `${sessionStorage.getItem("accessToken") || ""}`,
+		},
+		keepAlive: 1_000,
+	})
+);
+
+// Split link: route queries and mutations to HTTP, subscriptions to WebSocket
+const splitLink = split(
+	({ query }) => {
+		const definition = getMainDefinition(query);
+		return (
+			definition.kind === "OperationDefinition" &&
+			definition.operation === "subscription"
+		);
+	},
+	wsLink,
+	from([authLink, errorLink, httpLink])
+);
+
 // Apollo Client setup
 const client = new ApolloClient({
-	link: from([
-		authLink,
-		errorLink,
-		createUploadLink({
-			uri: "/api/graphql",
-			headers: {
-				"Apollo-Require-Preflight": "true",
-			},
-		}) as unknown as ApolloLink,
-	]),
+	link: splitLink,
 	cache: new InMemoryCache(),
 });
 
