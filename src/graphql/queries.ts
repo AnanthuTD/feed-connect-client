@@ -145,3 +145,37 @@ export const GET_POST_LIKES = gql`
 		}
 	}
 `;
+
+
+export const GET_USER_PROFILE = gql`
+  query GetUserProfile($username: String!) {
+    userProfile(username: $username) {
+      user {
+        id
+        username
+        fullName
+        avatar
+        email
+        createdAt
+      }
+      followers {
+        id
+        username
+        fullName
+        avatar
+      }
+      following {
+        id
+        username
+        fullName
+        avatar
+      }
+      posts {
+        id
+        file
+        caption
+        createdAt
+      }
+    }
+  }
+`;

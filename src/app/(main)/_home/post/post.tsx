@@ -1,8 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { PostsInterface } from "@/utils/Interfaces";
-import { UUID } from "crypto";
 import { useRouter } from "next/navigation";
-import axios from "@/lib/axios";
 import SaveIcon from "../../../components/icons/saveIcon";
 import SendIcon from "../../../components/icons/sendIcon";
 import SmileIcon from "@/app/components/icons/smileIcon";
@@ -19,6 +17,8 @@ import Image from "next/image";
 import ColorThief from "colorthief";
 import { useMutation } from "@apollo/client";
 import { TOGGLE_LIKE } from "@/graphql/queries";
+import { ADD_COMMENT, EDIT_COMMENT, DELETE_COMMENT } from "@/graphql/mutation";
+
 
 function Post({ post }: { post: PostsInterface }) {
 	const [comment, setComment] = useState("");
@@ -44,6 +44,15 @@ function Post({ post }: { post: PostsInterface }) {
 	const { user } = useUserContext();
 
 	const videoRef = useRef<HTMLVideoElement>(null);
+
+    const [newComment, setNewComment] = useState("");
+
+    const [addComment] = useMutation(ADD_COMMENT, {
+        onCompleted: (data) => setComments([...comments, data.addComment]),
+    });
+
+    const [editComment] = useMutation(EDIT_COMMENT);
+    const [deleteComment] = useMutation(DELETE_COMMENT);
 
 	useEffect(() => {
 		if (videoRef.current) {
@@ -93,25 +102,40 @@ function Post({ post }: { post: PostsInterface }) {
 		}
 	}, []);
 
-	const handlePostComment = async () => {
-		if (!comment) return;
+	const handleAddComment = () => {
+        if (!newComment.trim()) return;
 
-		try {
-			const response = await axios.post("/api/post/comments/", {
-				comment: comment,
-				post_id: currentPost.id,
-			});
+        addComment({
+            variables: {
+                postId: post.id,
+                content: newComment,
+            },
+        });
 
-			if (response.status === 200) {
-				setComment("");
-			} else {
-				throw new Error("Network response was not ok");
-			}
-		} catch (error) {
-			console.error("There was a problem with the Axios request:", error);
-			// Display an error message to the user
-		}
-	};
+        setNewComment("");
+    };
+
+    const handleEditComment = (commentId, content) => {
+        editComment({
+            variables: { commentId, content },
+            onCompleted: (data) => {
+                setComments(
+                    comments.map((comment) =>
+                        comment.id === commentId ? { ...comment, content: data.editComment.content } : comment
+                    )
+                );
+            },
+        });
+    };
+
+    const handleDeleteComment = (commentId) => {
+        deleteComment({
+            variables: { commentId },
+            onCompleted: () => {
+                setComments(comments.filter((comment) => comment.id !== commentId));
+            },
+        });
+    };
 
 	function handleFollow(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
 		console.log("hi");
@@ -326,7 +350,7 @@ function Post({ post }: { post: PostsInterface }) {
 							{comment ? (
 								<span
 									className="text-xs font-bold text-brightBlue"
-									onClick={() => handlePostComment()}
+									onClick={() => handleAddComment()}
 								>
 									POST
 								</span>
