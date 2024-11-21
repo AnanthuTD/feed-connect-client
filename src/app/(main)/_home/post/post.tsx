@@ -17,6 +17,9 @@ import timeDifference from "@/utils/time_difference";
 import { isImageFile, isVideoFile } from "@/utils/video_or_image";
 import Image from "next/image";
 import ColorThief from "colorthief";
+import { useMutation } from "@apollo/client";
+import { ADD_COMMENT, EDIT_COMMENT, DELETE_COMMENT } from "@/graphql/mutation";
+
 
 function Post({ post }: { post: PostsInterface }) {
 	const [comment, setComment] = useState("");
@@ -24,7 +27,6 @@ function Post({ post }: { post: PostsInterface }) {
 	const [saved, setSaved] = useState(false);
 	const [currentPost] = useState(post);
 	const [likes, setLikes] = useState(false);
-	const [comments, setComments] = useState(false);
 	const [playVideo, setPlayVideo] = useState(false);
 	const [backgroundColor, setBackgroundColor] = useState("black"); // Default background color
 	const imageRef = useRef<HTMLImageElement>(null); // Ref for the image
@@ -33,6 +35,15 @@ function Post({ post }: { post: PostsInterface }) {
 	const { user } = useUserContext();
 
 	const videoRef = useRef<HTMLVideoElement>(null);
+
+    const [newComment, setNewComment] = useState("");
+
+    const [addComment] = useMutation(ADD_COMMENT, {
+        onCompleted: (data) => setComments([...comments, data.addComment]),
+    });
+
+    const [editComment] = useMutation(EDIT_COMMENT);
+    const [deleteComment] = useMutation(DELETE_COMMENT);
 
 	useEffect(() => {
 		if (videoRef.current) {
@@ -123,25 +134,40 @@ function Post({ post }: { post: PostsInterface }) {
 		}
 	}, []);
 
-	const handlePostComment = async () => {
-		if (!comment) return;
+	const handleAddComment = () => {
+        if (!newComment.trim()) return;
 
-		try {
-			const response = await axios.post("/api/post/comments/", {
-				comment: comment,
-				post_id: currentPost.id,
-			});
+        addComment({
+            variables: {
+                postId: post.id,
+                content: newComment,
+            },
+        });
 
-			if (response.status === 200) {
-				setComment("");
-			} else {
-				throw new Error("Network response was not ok");
-			}
-		} catch (error) {
-			console.error("There was a problem with the Axios request:", error);
-			// Display an error message to the user
-		}
-	};
+        setNewComment("");
+    };
+
+    const handleEditComment = (commentId, content) => {
+        editComment({
+            variables: { commentId, content },
+            onCompleted: (data) => {
+                setComments(
+                    comments.map((comment) =>
+                        comment.id === commentId ? { ...comment, content: data.editComment.content } : comment
+                    )
+                );
+            },
+        });
+    };
+
+    const handleDeleteComment = (commentId) => {
+        deleteComment({
+            variables: { commentId },
+            onCompleted: () => {
+                setComments(comments.filter((comment) => comment.id !== commentId));
+            },
+        });
+    };
 
 	function handleFollow(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
 		console.log("hi");
