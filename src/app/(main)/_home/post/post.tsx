@@ -17,6 +17,8 @@ import timeDifference from "@/utils/time_difference";
 import { isImageFile, isVideoFile } from "@/utils/video_or_image";
 import Image from "next/image";
 import ColorThief from "colorthief";
+import { useMutation } from "@apollo/client";
+import { TOGGLE_LIKE } from "@/graphql/queries";
 
 function Post({ post }: { post: PostsInterface }) {
 	const [comment, setComment] = useState("");
@@ -28,6 +30,15 @@ function Post({ post }: { post: PostsInterface }) {
 	const [playVideo, setPlayVideo] = useState(false);
 	const [backgroundColor, setBackgroundColor] = useState("black"); // Default background color
 	const imageRef = useRef<HTMLImageElement>(null); // Ref for the image
+
+	// gql
+	const [handleLike, { data: likeMutationData }] = useMutation(TOGGLE_LIKE);
+
+	useEffect(() => {
+		if (likeMutationData) {
+			setLike(likeMutationData.toggleLike);
+		}
+	}, [likeMutationData]);
 
 	const router = useRouter();
 	const { user } = useUserContext();
@@ -76,50 +87,9 @@ function Post({ post }: { post: PostsInterface }) {
 		router.push(`/profile/?username=${username}`);
 	}
 
-	async function handleLike(post_id: UUID): Promise<void> {
-		try {
-			let response;
-			if (!like) {
-				response = await axios.patch(
-					`/api/post/${post_id}/like/`,
-					{},
-					{
-						withCredentials: true, // include credentials
-					}
-				);
-			} else {
-				response = await axios.patch(
-					`/api/post/${post_id}/dislike/`,
-					{},
-					{
-						withCredentials: true, // include credentials
-					}
-				);
-			}
-
-			if (response.status === 200) {
-				const data = response.data;
-				setLike(!like);
-				currentPost.likes = data.likes;
-				// Update the UI to reflect the new like count or display a success message
-			} else {
-				throw new Error("Network response was not ok");
-			}
-		} catch (error) {
-			console.error("There was a problem with the Axios request:", error);
-			// Display an error message to the user
-		}
-	}
-
 	useEffect(() => {
-		if (currentPost.likes && user) {
-			const found = currentPost.likes.find(
-				(obj) => obj.username === user?.username
-			);
-
-			if (found) {
-				setLike(true);
-			}
+		if (currentPost) {
+			setLike(currentPost.likedByCurrentUser);
 		}
 	}, []);
 
@@ -256,7 +226,7 @@ function Post({ post }: { post: PostsInterface }) {
 
 					{/* post */}
 					<div
-						className="relative mt-2 flex h-full items-center justify-center overflow-hidden lg:rounded-lg" 
+						className="relative mt-2 flex h-full items-center justify-center overflow-hidden lg:rounded-lg"
 						style={{ backgroundColor }}
 					>
 						{isImageFile(currentPost.file) ? (
@@ -291,7 +261,11 @@ function Post({ post }: { post: PostsInterface }) {
 				<footer className="w-full space-y-2">
 					<div className="flex items-center justify-between h-fit">
 						<div className="flex gap-2">
-							<div onClick={() => handleLike(currentPost.id)}>
+							<div
+								onClick={() =>
+									handleLike({ variables: { postId: currentPost.id } })
+								}
+							>
 								<Heart className="cursor-pointer" like={like} />
 							</div>
 							<div onClick={() => setComments(true)}>

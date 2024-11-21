@@ -27,6 +27,11 @@ export const GET_POSTS = gql`
 					username
 					fullName
 				}
+				likes {
+					user{
+						username
+					}
+				}
 			}
 			totalCount
 			hasMore
