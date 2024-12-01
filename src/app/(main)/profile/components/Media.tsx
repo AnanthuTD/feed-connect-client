@@ -51,7 +51,7 @@ function Media({ post }: { post: Post }) {
 			/* ref={imageContainerRef} */>
 			{isImageFile(post.file) /* && imageContainer */ ? (
 				<Image
-					src={`/api/media/${post?.file}`}
+					src={`${post?.file}`}
 					alt=""
 					// width={imageContainerRef.current.clientWidth+200}
 					// height={imageContainerRef.current.clientHeight + 200}
@@ -62,7 +62,7 @@ function Media({ post }: { post: Post }) {
 			) : null}
 			{isVideoFile(post.file) ? (
 				<video
-					src={`api/media/${post.file}`}
+					src={`${post.file}`}
 					controls={false}
 					muted={true}
 					className=""
