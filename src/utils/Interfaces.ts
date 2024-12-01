@@ -1,20 +1,16 @@
 import { UUID } from "crypto";
 
 export interface UserState {
-	id_user: UUID;
 	username: string;
-	first_name: string;
-	last_name: string;
+	fullName: string;
 	email: string;
 	phone: string;
 	bio: string;
 	location: string;
 	gender: string;
 	website: string;
-	profile_img: string;
-	followers: UUID[];
-	following: UUID[];
-	post_count: number;
+	avatar: string;
+	id: string;
 }
 // Define a type for the menu state
 export interface MenuState {

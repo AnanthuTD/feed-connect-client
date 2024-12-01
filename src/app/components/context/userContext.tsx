@@ -3,7 +3,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { UserState } from "../../../utils/Interfaces";
 import { useRouter } from "next/navigation";
 import Loading from "@/app/loading"; // Import the Loading component
-import { gql, useQuery } from "@apollo/client";
+import { useQuery } from "@apollo/client";
 import { GET_PROFILE } from "@/graphql/queries";
 
 // Define the interface for context value
