@@ -8,9 +8,10 @@ import { useChatLogic } from "../hooks/useChatLogic";
 
 interface ChatBoxProps {
 	recipient: string; // username
+	conversationId: string;
 }
 
-function ChatBox({ recipient }: ChatBoxProps) {
+function ChatBox({ recipient, conversationId }: ChatBoxProps) {
 	const chatLogRef = useRef<HTMLDivElement>(null);
 	const {
 		chats,
@@ -20,7 +21,7 @@ function ChatBox({ recipient }: ChatBoxProps) {
 		handleSendMessage,
 		setMessage,
 		message,
-	} = useChatLogic(recipient, chatLogRef);
+	} = useChatLogic(recipient, chatLogRef, null);
 
 	return (
 		<div className="flex h-full w-full flex-col justify-between">

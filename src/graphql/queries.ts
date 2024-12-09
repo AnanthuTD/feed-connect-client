@@ -28,7 +28,7 @@ export const GET_POSTS = gql`
 					fullName
 				}
 				likes {
-					user{
+					user {
 						username
 					}
 				}
@@ -115,7 +115,25 @@ export const GET_CONVERSATIONS = gql`
 			lastMessage {
 				content
 			}
-			participants {
+			participant {
+				username
+				avatar
+				fullName
+				id
+			}
+			id
+		}
+	}
+`;
+
+export const GET_CONVERSATION = gql`
+	query GetConversation($conversationId: ID!) {
+		conversation(conversationId: $conversationId) {
+			id
+			lastMessage {
+				content
+			}
+			participant {
 				username
 				avatar
 				fullName
@@ -146,36 +164,35 @@ export const GET_POST_LIKES = gql`
 	}
 `;
 
-
 export const GET_USER_PROFILE = gql`
-  query GetUserProfile($username: String!) {
-    userProfile(username: $username) {
-      user {
-        id
-        username
-        fullName
-        avatar
-        email
-        createdAt
-      }
-      followers {
-        id
-        username
-        fullName
-        avatar
-      }
-      following {
-        id
-        username
-        fullName
-        avatar
-      }
-      posts {
-        id
-        file
-        caption
-        createdAt
-      }
-    }
-  }
+	query GetUserProfile($username: String!) {
+		userProfile(username: $username) {
+			user {
+				id
+				username
+				fullName
+				avatar
+				email
+				createdAt
+			}
+			followers {
+				id
+				username
+				fullName
+				avatar
+			}
+			following {
+				id
+				username
+				fullName
+				avatar
+			}
+			posts {
+				id
+				file
+				caption
+				createdAt
+			}
+		}
+	}
 `;

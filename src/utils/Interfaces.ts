@@ -70,10 +70,11 @@ export interface OtherUserProfile {
 }
 
 export interface Chat {
-	message: string;
+	content: string;
 	createdAt: Date;
 	senderId: string;
-	id: number;
+	id: string;
+	conversationId: string;
 }
 
 export interface Story {
@@ -100,4 +101,17 @@ export interface Post {
 	hash_tag: string;
 	mentions: string;
 	location: string;
+}
+
+export interface Conversation {
+	lastMessage: {
+		content: string;
+	};
+	participant: {
+		username: string;
+		avatar: string;
+		fullName: string;
+		id: string;
+	};
+	id: string;
 }

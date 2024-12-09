@@ -9,14 +9,15 @@ import {
 import { Chat } from "@/utils/Interfaces";
 
 export const useChatLogic = (
-	recipient: string,
-	chatLogRef: React.RefObject<HTMLDivElement>
+	recipient: string | null,
+	chatLogRef: React.RefObject<HTMLDivElement> | null,
 ) => {
 	const [message, setMessage] = useState("");
 	const [skip, setSkip] = useState(0);
 	const [take] = useState(20);
 	const [hasMore, setHasMore] = useState(true);
 	const [chats, setChats] = useState<Chat[]>([]);
+	const [newChats, setNewChats] = useState<Chat[]>([]);
 
 	const { data, loading, fetchMore } = useQuery(FETCH_MESSAGES, {
 		variables: { receiverId: recipient, take, skip },
@@ -34,7 +35,13 @@ export const useChatLogic = (
 	useSubscription(SUBSCRIBE_MESSAGE, {
 		onData: ({ data }) => {
 			const newMessage = data.data.MessageSubscription;
-			if (newMessage) setChats((prev) => [...prev, newMessage]);
+			if (newMessage) {
+				if (recipient && newMessage.senderId == recipient)
+					setChats((prev) => [...prev, newMessage]);
+
+				alert('In subscription')
+				setNewChats((prev) => [...prev, newMessage]);
+			}
 		},
 	});
 
@@ -48,17 +55,24 @@ export const useChatLogic = (
 		fetchMore({ variables: { skip: skip + take } });
 	};
 
-	const handleSendMessage = () => {
+	const handleSendMessage = async () => {
 		if (message) {
-			sendMessage({ variables: { receiverId: recipient, content: message } });
+			const savedMessage = await sendMessage({
+				variables: { receiverId: recipient, content: message },
+			});
+			setChats((prev) => [...prev, savedMessage.data.sendMessage]);
 		}
 	};
 
 	useEffect(() => {
-		if (chatLogRef.current && chats.length === take) {
+		if (chatLogRef?.current && chats.length === take) {
 			chatLogRef.current.scrollTop = chatLogRef.current.scrollHeight;
 		}
 	}, [chats, chatLogRef]);
+
+	const clearNewMessageNotificationList = () => {
+		// setNewChats([]);
+	};
 
 	return {
 		chats,
@@ -68,5 +82,7 @@ export const useChatLogic = (
 		handleSendMessage,
 		setMessage,
 		message,
+		newChats,
+		clearNewMessageNotificationList,
 	};
 };

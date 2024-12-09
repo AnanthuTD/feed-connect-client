@@ -2,12 +2,9 @@
 import React, { useEffect, useState } from "react";
 import { ReactNode } from "react";
 import Popup from "../popup";
+import { useChatLogic } from "@/app/(main)/inbox/hooks/useChatLogic";
 
 // const ChatContext = createContext();
-
-interface WebSocketData {
-	data: string;
-}
 
 interface chats {
 	message: string;
@@ -16,9 +13,10 @@ interface chats {
 }
 
 export function ChatContextProvider({ children }: { children: ReactNode }) {
-	const [chatSocket, setChatSocket] = useState<WebSocket | null>(null);
-	const [chats, setChats] = useState<chats[]>([]);
 	const [isPopupOpen, setPopupOpen] = useState(false);
+	const {
+		chats,
+	} = useChatLogic(null, null);
 
 	const openPopup = () => {
 		setPopupOpen(true);
@@ -29,33 +27,7 @@ export function ChatContextProvider({ children }: { children: ReactNode }) {
 	};
 
 	useEffect(() => {
-		const socket = new WebSocket(`ws://localhost:8000/ws/chat/`);
-
-		// Set the WebSocket object to the state
-		setChatSocket(socket);
-
-		// Listen for incoming messages from the server
-		socket.addEventListener("message", (event: WebSocketData) => {
-			const data = JSON.parse(event.data);
-
-			if (data.hasOwnProperty("status")) return;
-
-			const new_message: chats = data.message;
-			setChats((prevChats) => [...prevChats, new_message]);
-		});
-
-		// Log an error if the WebSocket connection is closed
-		socket.addEventListener("close", () => {
-			console.error("Chat socket closed unexpectedly");
-		});
-
-		return () => {
-			// Close the WebSocket connection when the component unmounts
-			socket.close();
-		};
-	}, []);
-
-	useEffect(() => {
+		console.log('newMessage notification!! ===========================')
 		if (chats.length) openPopup();
 	}, [chats]);
 
@@ -67,8 +39,8 @@ export function ChatContextProvider({ children }: { children: ReactNode }) {
 				</div>
 				{chats.map((chat) => {
 					return (
-						<span className="text-black" key={chat.timestamp}>
-							{chat.sender_username}
+						<span className="text-black" key={chat.id}>
+							{chat.senderId}
 						</span>
 					);
 				})}

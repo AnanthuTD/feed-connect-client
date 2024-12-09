@@ -3,20 +3,18 @@ import React, { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useUserContext } from "@/app/components/context/userContext";
 import ArrowLeft from "@/app/components/icons/ArrowLeft";
-import { gql, useQuery } from "@apollo/client";
+import { useQuery } from "@apollo/client";
 import CreateMessage from "./_components/create";
 import DropDown from "./_components/dropdown";
 import AccountMessage from "./_components/accountMessage";
 import ChatBox from "./_components/chatBox";
 import SearchAccounts from "./_components/searchAccounts";
 import { GET_CONVERSATIONS, GET_PROFILE_BY_ID } from "@/graphql/queries";
+import { useChatLogic } from "./hooks/useChatLogic";
+import useConversation from "./hooks/useConversation";
+import type { Chat, Conversation } from "@/utils/Interfaces";
 
-interface conversations {
-	last_message: string;
-	profile_img: URL;
-	updated_at?: string;
-	username: string;
-}
+type Conversations = Conversation[];
 
 function Messages() {
 	const searchParams = useSearchParams();
@@ -26,7 +24,7 @@ function Messages() {
 	const { user } = useUserContext();
 
 	const [profile, setProfile] = useState<OtherUserProfile | undefined>();
-	const [conversations, setConversations] = useState<conversations[] | []>([]);
+	const [conversations, setConversations] = useState<Conversations | []>([]);
 	const [selectedChat, setSelectedChat] = useState("");
 	const [isOpenUserSearchBox, setIsOpenUserSearchBox] =
 		useState<boolean>(false);
@@ -38,10 +36,13 @@ function Messages() {
 	const contentRef = useRef<HTMLDivElement>(null);
 
 	// Fetch user profile using GraphQL
-	const { data: profileData, error: profileError } = useQuery(GET_PROFILE_BY_ID, {
-		variables: { id_user },
-		skip: !id_user, // Skip if no user id
-	});
+	const { data: profileData, error: profileError } = useQuery(
+		GET_PROFILE_BY_ID,
+		{
+			variables: { id_user },
+			skip: !id_user, // Skip if no user id
+		}
+	);
 
 	// Fetch conversations using GraphQL
 	const { data: conversationsData, error: conversationsError } =
@@ -123,12 +124,65 @@ function Messages() {
 	}
 
 	useEffect(() => {
-		// window.addEventListener("resize", updateVisibility);
-	}, []);
-
-	useEffect(() => {
 		console.log("is open : ", isOpenUserSearchBox);
 	}, [isOpenUserSearchBox]);
+
+	const { newChats } = useChatLogic(null, null);
+
+	const { getConversation } = useConversation();
+
+	useEffect(() => {
+		alert('new Chat')
+
+		if (newChats.length) {
+				handleNewMessage(conversations, newChats[newChats.length - 1], setConversations);
+		}
+	}, [newChats]);
+
+	// if conversation already exist update the lastMessage, if not the fetch it and add the conversation to the top of the list
+	async function handleNewMessage(
+		conversations: Conversations,
+		newMessage: Chat,
+		updateConversations: (updated: Conversations) => void
+	) {
+		const { conversationId, content } = newMessage;
+
+		console.log(newMessage)
+
+		// Clone conversations to avoid mutating the original state
+		const updatedConversations = [...conversations];
+
+		// Find the index of the existing conversation
+		const index = updatedConversations.findIndex(
+			(conv) => conv.id === conversationId
+		);
+
+		if (index !== -1) {
+			// Update existing conversation
+			updatedConversations[index] = {
+				...updatedConversations[index],
+				lastMessage: {
+					content: content,
+				},
+
+			};
+
+			// Move it to the top
+			const [updatedConversation] = updatedConversations.splice(index, 1);
+			updatedConversations.unshift(updatedConversation);
+		} else {
+			// Fetch the new conversation details
+			const newConvo = await getConversation(conversationId);
+
+			// Add new conversation to the top
+			updatedConversations.unshift(newConvo);
+		}
+
+		console.log('new Conversations: ', updatedConversations)
+
+		// Update the state
+		updateConversations(updatedConversations);
+	}
 
 	return (
 		<div
@@ -165,29 +219,21 @@ function Messages() {
 				>
 					{/* users */}
 					<div className="h-full overflow-y-auto">
-						{conversations.map(
-							(
-								conversation,
-								index: any
-							) => {
-								const [otherUser] = conversation.participants.filter(
-									({ id }) => id !== user.id
-								);
-								return (
-										<AccountMessage
-											username={otherUser.username}
-											profile_img={otherUser.avatar || ''}
-											last_message={conversation.lastMessage?.content}
-											setSelectChat={setSelectedChat}
-											width={60}
-											height={60}
-											key={otherUser.username}
-											onClick={updateVisibility}
-											userId={otherUser.id}
-										/>
-								);
-							}
-						)}
+						{conversations.map((conversation, index: any) => {
+							return (
+								<AccountMessage
+									username={conversation.participant.username}
+									profile_img={conversation.participant.avatar || ""}
+									last_message={conversation.lastMessage?.content}
+									setSelectChat={setSelectedChat}
+									width={60}
+									height={60}
+									key={conversation.participant.username}
+									onClick={updateVisibility}
+									userId={conversation.participant.id}
+								/>
+							);
+						})}
 					</div>
 				</div>
 

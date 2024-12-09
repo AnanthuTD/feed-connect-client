@@ -4,7 +4,7 @@ import MenuBar from "@/app/(main)/_menu/menu";
 // context
 import { MenuContextProvider } from "../components/context/menuContext";
 import { UserContextProvider } from "../components/context/userContext";
-import { ChatContextProvider } from "../components/context/chatContext";
+// import { ChatContextProvider } from "../components/context/chatContext";
 
 export default function RootLayout({
 	children,
@@ -15,7 +15,7 @@ export default function RootLayout({
 		<main className="flex min-h-screen flex-col-reverse bg-black lg:flex-row">
 			<UserContextProvider>
 				<MenuContextProvider>
-					<ChatContextProvider>
+					{/* <ChatContextProvider> */}
 						<div className="z-10 h-fit justify-between bg-black p-1 max-lg:fixed max-lg:w-full lg:flex lg:h-screen lg:flex-col lg:p-5 xl:w-[16%] xl:border-r xl:border-[rgb(38,38,38)]">
 							<MenuBar />
 						</div>
@@ -24,7 +24,7 @@ export default function RootLayout({
 							id="main_scrollable">
 							{children}
 						</div>
-					</ChatContextProvider>
+					{/* </ChatContextProvider> */}
 				</MenuContextProvider>
 			</UserContextProvider>
 		</main>

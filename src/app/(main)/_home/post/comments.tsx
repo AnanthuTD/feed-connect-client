@@ -38,7 +38,7 @@ function Comments({
 
 	useEffect(() => {
 		const socket = new WebSocket(
-			`ws://localhost:8000/ws/post/comment/${post_id.toString()}/`
+			// `ws://localhost:8000/ws/post/comment/${post_id.toString()}/`
 		);
 
 		setCommentSocket(socket);
