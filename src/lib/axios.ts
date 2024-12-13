@@ -1,3 +1,4 @@
+import { getAccessToken } from "@/utils/sessionStorage";
 import axios, {
 	AxiosError,
 	AxiosRequestConfig,
@@ -26,7 +27,7 @@ export async function fetchCSRF() {
 // Add request interceptor to include accessToken in headers
 axiosInstance.interceptors.request.use(
 	(config) => {
-		const accessToken = sessionStorage.getItem("accessToken");
+		const accessToken = getAccessToken()
 		if (accessToken) {
 			config.headers = {
 				...config.headers,

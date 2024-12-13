@@ -17,6 +17,7 @@ import createUploadLink from "apollo-upload-client/createUploadLink.mjs";
 import promiseToObservable from "@/utils/promiseToObservable";
 import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
 import { createClient } from "graphql-ws";
+import { getAccessToken, getSessionStorage } from "@/utils/sessionStorage";
 
 // Token refresh logic
 let isRefreshing = false;
@@ -37,7 +38,8 @@ const refreshAccessToken = async (): Promise<string> => {
 	try {
 		const response = await axios.post("/api/auth/refresh-token");
 		const newAccessToken: string = response.data.accessToken;
-		sessionStorage.setItem("accessToken", newAccessToken);
+		const sessionStorage = getSessionStorage();
+		if (sessionStorage) sessionStorage.setItem("accessToken", newAccessToken);
 		onTokenRefreshed(newAccessToken);
 		return newAccessToken;
 	} catch (error) {
@@ -50,7 +52,9 @@ const refreshAccessToken = async (): Promise<string> => {
 
 // Authorization Link
 const authLink = setContext(async (_, { headers }) => {
-	const accessToken = sessionStorage.getItem("accessToken");
+	
+	let accessToken = getAccessToken();
+	
 	return {
 		headers: {
 			...headers,
@@ -118,7 +122,7 @@ const wsLink = new GraphQLWsLink(
 	createClient({
 		url: `ws://localhost:3000/graphql`,
 		connectionParams: {
-			authToken: `${sessionStorage.getItem("accessToken") || ""}`,
+			authToken: `${getAccessToken()}`,
 		},
 		keepAlive: 1_000,
 	})
