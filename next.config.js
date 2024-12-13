@@ -20,7 +20,6 @@ const nextConfig = {
 };
 
 const apiUrl = process.env.API_URL;
-console.log("apiUrl: ", apiUrl)
 
 module.exports = {
 	...nextConfig,
