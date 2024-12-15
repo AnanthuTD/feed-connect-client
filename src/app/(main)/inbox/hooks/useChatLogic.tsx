@@ -39,7 +39,7 @@ export const useChatLogic = (
 				if (recipient && newMessage.senderId == recipient)
 					setChats((prev) => [...prev, newMessage]);
 
-				alert('In subscription')
+				// alert('In subscription')
 				setNewChats((prev) => [...prev, newMessage]);
 			}
 		},

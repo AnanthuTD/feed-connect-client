@@ -58,7 +58,7 @@ function ArrowLeft({
 		strokeWidth="2"></path>
 	<path
 		d="M9.763 17.664a.908.908 0 0 1-.454-.787V11.63a.909.909 0 0 1 1.364-.788l4.545 2.624a.909.909 0 0 1 0 1.575l-4.545 2.624a.91.91 0 0 1-.91 0Z"
-		fill-rule="evenodd"></path>
+		fillRule="evenodd"></path>
 </svg>
 
 		</>
