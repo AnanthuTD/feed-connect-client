@@ -3,6 +3,7 @@ import "./globals.css";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 import LayoutProvider from "./layoutProvider";
 import ApolloContextProvider from "./ApolloContextProvider";
+import VideoCallContextProvider from "./components/context/VideoCallContext";
 
 export const metadata = {
 	title: "WowGram",
@@ -20,7 +21,9 @@ export default function RootLayout({
 				<body>
 					<AntdRegistry>
 						<ApolloContextProvider>
-							<LayoutProvider>{children}</LayoutProvider>
+							<LayoutProvider>
+								<VideoCallContextProvider>{children}</VideoCallContextProvider>
+							</LayoutProvider>
 						</ApolloContextProvider>
 					</AntdRegistry>
 				</body>
