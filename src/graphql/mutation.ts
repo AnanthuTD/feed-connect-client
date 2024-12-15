@@ -29,4 +29,23 @@ export const DELETE_COMMENT = gql`
     }
 `;
 
+export const SEND_OFFER = gql`
+	mutation SendOffer($offer: OfferInput!) {
+		sendOffer(offer: $offer)
+	}
+`;
+
+export const SEND_ANSWER = gql`
+	mutation SendAnswer($answer: AnswerInput!) {
+		sendAnswer(answer: $answer)
+	}
+`;
+
+export const SEND_ICE_CANDIDATE = gql`
+	mutation SendIceCandidate($candidate: IceCandidateInput!) {
+		sendIceCandidate(candidate: $candidate)
+	}
+`;
+
+
 
