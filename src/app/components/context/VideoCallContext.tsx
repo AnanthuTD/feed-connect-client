@@ -121,6 +121,7 @@ function VideoCallContextProvider({ children }: { children: React.ReactNode }) {
 					onClose={onCallEnd}
 					calleeInfo={offerData.offerReceived.callerInfo}
 					key={offerData.offerReceived.callerInfo.id}
+					type="answer"
 				/>
 			)}
 

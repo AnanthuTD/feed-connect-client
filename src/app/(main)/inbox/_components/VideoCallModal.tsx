@@ -1,15 +1,8 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import { useMutation, useSubscription } from "@apollo/client";
-import { useUserContext } from "@/app/components/context/userContext";
 import Modal from "antd/es/modal/Modal";
 import { Button, Typography } from "antd";
-import {
-	AudioOutlined,
-	VideoCameraOutlined,
-	AudioMutedOutlined,
-	PhoneOutlined,
-} from "@ant-design/icons";
 import {
 	SEND_ANSWER,
 	SEND_ICE_CANDIDATE,
@@ -19,6 +12,7 @@ import {
 	ANSWER_RECEIVED,
 	ICE_CANDIDATE_RECEIVED,
 } from "@/graphql/subscription";
+import FooterControls from "./FooterControls";
 
 interface VideoCallModalProps {
 	onClose: () => void;
@@ -37,12 +31,14 @@ interface VideoCallModalProps {
 		fullName: string;
 		id: string;
 	} | null;
+	type: "call" | "answer";
 }
 
 function VideoCallModal({
 	onClose,
 	offerData = null,
 	calleeInfo = null,
+	type = "call",
 }: VideoCallModalProps) {
 	const targetUserId = calleeInfo?.id;
 
@@ -56,13 +52,40 @@ function VideoCallModal({
 	const [sendAnswer] = useMutation(SEND_ANSWER);
 	const [sendIceCandidate] = useMutation(SEND_ICE_CANDIDATE);
 
+	/* subscription for answer and ice candidate data */
 	const { data: answerData } = useSubscription(ANSWER_RECEIVED, {
 		shouldResubscribe: true,
 	});
 	const { data: iceCandidateData } = useSubscription(ICE_CANDIDATE_RECEIVED);
 
+	/* audio and video tracks */
 	const audioTrackRef = useRef<MediaStreamTrack | null>(null);
 	const videoTrackRef = useRef<MediaStreamTrack | null>(null);
+
+	/* add track to peer connection and set the stream to the video element */
+	async function addTrack(peerConnection: RTCPeerConnection) {
+		if (!peerConnection) return;
+
+		const stream = await navigator.mediaDevices.getUserMedia({
+			video: true,
+			audio: true,
+		});
+
+		stream.getTracks().forEach((track) => {
+			if (
+				!peerConnection.getSenders().find((sender) => sender.track === track)
+			) {
+				peerConnection.addTrack(track, stream);
+			}
+		});
+
+		audioTrackRef.current = stream.getAudioTracks()[0];
+		videoTrackRef.current = stream.getVideoTracks()[0];
+
+		if (myVideoRef.current) {
+			myVideoRef.current.srcObject = stream;
+		}
+	}
 
 	useEffect(() => {
 		async function configurePeerConnection() {
@@ -97,33 +120,21 @@ function VideoCallModal({
 
 			setPeerConnection(pc);
 
-			/* get user media */
-			const stream = await navigator.mediaDevices.getUserMedia({
-				video: true,
-				audio: true,
-			});
+			if (type === "call") {
+				alert("addTrack");
 
-			audioTrackRef.current = stream.getAudioTracks()[0];
-			videoTrackRef.current = stream.getVideoTracks()[0];
-
-			// Add tracks to the peer connection
-			stream.getTracks().forEach((track) => {
-				pc.addTrack(track, stream);
-			});
-
-			console.log("===============================================");
-			console.log("senders...", pc?.getSenders().length);
-			console.log("===============================================");
-
-			// Set local video stream
-			if (myVideoRef.current) {
-				myVideoRef.current.srcObject = stream;
+				await addTrack(pc);
 			}
 		}
 
 		configurePeerConnection();
+
+		return () => {
+			peerConnection?.close();
+		};
 	}, [sendIceCandidate]);
 
+	/* handle offer data */
 	useEffect(() => {
 		if (offerData) {
 			console.log("===============================================");
@@ -141,21 +152,7 @@ function VideoCallModal({
 					new RTCSessionDescription(offerData.offer)
 				);
 
-				const stream = await navigator.mediaDevices.getUserMedia({
-					video: true,
-					audio: true,
-				});
-
-				// Add tracks to the peer connection
-				stream.getTracks().forEach((track) => {
-					if (
-						!peerConnection
-							.getSenders()
-							.find((sender) => sender.track === track)
-					) {
-						peerConnection.addTrack(track, stream);
-					}
-				});
+				await addTrack(peerConnection);
 
 				console.log("===============================================");
 				console.log("senders...", peerConnection?.getSenders().length);
@@ -178,6 +175,7 @@ function VideoCallModal({
 		}
 	}, [offerData, peerConnection, sendAnswer]);
 
+	/* handle answer data */
 	useEffect(() => {
 		if (answerData) {
 			console.log("===============================================");
@@ -190,6 +188,7 @@ function VideoCallModal({
 		}
 	}, [answerData, peerConnection]);
 
+	/* handle ice candidate data */
 	useEffect(() => {
 		if (iceCandidateData) {
 			console.log("===============================================");
@@ -202,6 +201,7 @@ function VideoCallModal({
 		}
 	}, [iceCandidateData, peerConnection]);
 
+	/* start call */
 	const startCall = async () => {
 		const offer = await peerConnection?.createOffer();
 		await peerConnection?.setLocalDescription(offer);
@@ -214,27 +214,13 @@ function VideoCallModal({
 		sendOffer({ variables: { offer: { ...offer, targetUserId } } });
 	};
 
-	const FooterButtonShape = "round";
-
+	/* stop call */
 	const handleEndCall = () => {
-		/* stop call */
 		peerConnection?.close();
 		onClose();
 	};
 
-	const EndCallButton = () => {
-		return (
-			<div className="flex justify-end">
-				<Button
-					shape={FooterButtonShape}
-					danger
-					onClick={handleEndCall}
-					icon={<PhoneOutlined />}
-				></Button>
-			</div>
-		);
-	};
-
+	/* audio and video mute states */
 	const [isAudioMuted, setIsAudioMuted] = useState(false);
 	const [isVideoMuted, setIsVideoMuted] = useState(false);
 
@@ -252,47 +238,22 @@ function VideoCallModal({
 		setIsVideoMuted(!isVideoMuted);
 	};
 
-	const ToggleAudioButton = () => {
-		return (
-			<div className="flex justify-end">
-				<Button
-					shape="round"
-					danger={isAudioMuted}
-					icon={isAudioMuted ? <AudioMutedOutlined /> : <AudioOutlined />}
-					onClick={toggleAudio}
-				></Button>
-			</div>
-		);
-	};
-
-	const ToggleVideoButton = () => {
-		return (
-			<div className="flex justify-end">
-				<Button
-					shape={FooterButtonShape}
-					danger={isVideoMuted}
-					icon={
-						isVideoMuted ? <VideoCameraOutlined /> : <VideoCameraOutlined />
-					}
-					onClick={toggleVideo}
-				></Button>
-			</div>
-		);
-	};
-
-	const Footer = () => {
-		return (
-			<div className="flex justify-center gap-5">
-				<ToggleAudioButton />
-				<ToggleVideoButton />
-				<EndCallButton />
-			</div>
-		);
-	};
-
 	return (
 		<>
-			<Modal width={1000} open={true} footer={Footer} closable={false}>
+			<Modal
+				width={1000}
+				open={true}
+				footer={
+					<FooterControls
+						isAudioMuted={isAudioMuted}
+						isVideoMuted={isVideoMuted}
+						onToggleAudio={toggleAudio}
+						onToggleVideo={toggleVideo}
+						onEndCall={handleEndCall}
+					/>
+				}
+				closable={false}
+			>
 				<div className="flex w-full h-full gap-3 relative">
 					<Typography.Title
 						level={5}
