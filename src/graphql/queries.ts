@@ -165,16 +165,14 @@ export const GET_POST_LIKES = gql`
 `;
 
 export const GET_USER_PROFILE = gql`
-	query GetUserProfile($username: String!) {
-		userProfile(username: $username) {
-			user {
-				id
-				username
-				fullName
-				avatar
-				email
-				createdAt
-			}
+	query GetUserProfile($username: String, $id: ID) {
+		userProfile(username: $username, id: $id) {
+			id
+			username
+			fullName
+			avatar
+			email
+			createdAt
 			followers {
 				id
 				username
