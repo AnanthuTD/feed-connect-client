@@ -13,6 +13,7 @@ import {
 	ICE_CANDIDATE_RECEIVED,
 } from "@/graphql/subscription";
 import FooterControls from "./FooterControls";
+import addTrackToPeerConnection from "../utils/addTrackToPeerConnection";
 
 interface VideoCallModalProps {
 	onClose: () => void;
@@ -42,12 +43,15 @@ function VideoCallModal({
 }: VideoCallModalProps) {
 	const targetUserId = calleeInfo?.id;
 
+	/* video elements */
 	const myVideoRef = useRef<HTMLVideoElement>(null);
 	const peerVideoRef = useRef<HTMLVideoElement>(null);
 
+	/* peer connection */
 	const [peerConnection, setPeerConnection] =
 		useState<RTCPeerConnection | null>(null);
 
+	/* mutations */
 	const [sendOffer] = useMutation(SEND_OFFER);
 	const [sendAnswer] = useMutation(SEND_ANSWER);
 	const [sendIceCandidate] = useMutation(SEND_ICE_CANDIDATE);
@@ -61,31 +65,6 @@ function VideoCallModal({
 	/* audio and video tracks */
 	const audioTrackRef = useRef<MediaStreamTrack | null>(null);
 	const videoTrackRef = useRef<MediaStreamTrack | null>(null);
-
-	/* add track to peer connection and set the stream to the video element */
-	async function addTrack(peerConnection: RTCPeerConnection) {
-		if (!peerConnection) return;
-
-		const stream = await navigator.mediaDevices.getUserMedia({
-			video: true,
-			audio: true,
-		});
-
-		stream.getTracks().forEach((track) => {
-			if (
-				!peerConnection.getSenders().find((sender) => sender.track === track)
-			) {
-				peerConnection.addTrack(track, stream);
-			}
-		});
-
-		audioTrackRef.current = stream.getAudioTracks()[0];
-		videoTrackRef.current = stream.getVideoTracks()[0];
-
-		if (myVideoRef.current) {
-			myVideoRef.current.srcObject = stream;
-		}
-	}
 
 	useEffect(() => {
 		async function configurePeerConnection() {
@@ -123,7 +102,12 @@ function VideoCallModal({
 			if (type === "call") {
 				alert("addTrack");
 
-				await addTrack(pc);
+				await addTrackToPeerConnection(
+					pc,
+					audioTrackRef,
+					videoTrackRef,
+					myVideoRef
+				);
 			}
 		}
 
@@ -152,7 +136,12 @@ function VideoCallModal({
 					new RTCSessionDescription(offerData.offer)
 				);
 
-				await addTrack(peerConnection);
+				await addTrackToPeerConnection(
+					peerConnection,
+					audioTrackRef,
+					videoTrackRef,
+					myVideoRef
+				);
 
 				console.log("===============================================");
 				console.log("senders...", peerConnection?.getSenders().length);
