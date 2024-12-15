@@ -13,6 +13,9 @@ import { GET_CONVERSATIONS, GET_PROFILE_BY_ID } from "@/graphql/queries";
 import { useChatLogic } from "./hooks/useChatLogic";
 import useConversation from "./hooks/useConversation";
 import type { Chat, Conversation } from "@/utils/Interfaces";
+import { VideoCameraAddOutlined } from "@ant-design/icons";
+import VideoCallModal from "./_components/videoCallModal";
+import VideoCall from "./_components/VideoCall";
 
 type Conversations = Conversation[];
 
@@ -132,10 +135,12 @@ function Messages() {
 	const { getConversation } = useConversation();
 
 	useEffect(() => {
-		alert('new Chat')
-
 		if (newChats.length) {
-				handleNewMessage(conversations, newChats[newChats.length - 1], setConversations);
+			handleNewMessage(
+				conversations,
+				newChats[newChats.length - 1],
+				setConversations
+			);
 		}
 	}, [newChats]);
 
@@ -147,7 +152,7 @@ function Messages() {
 	) {
 		const { conversationId, content } = newMessage;
 
-		console.log(newMessage)
+		console.log(newMessage);
 
 		// Clone conversations to avoid mutating the original state
 		const updatedConversations = [...conversations];
@@ -164,7 +169,6 @@ function Messages() {
 				lastMessage: {
 					content: content,
 				},
-
 			};
 
 			// Move it to the top
@@ -178,7 +182,7 @@ function Messages() {
 			updatedConversations.unshift(newConvo);
 		}
 
-		console.log('new Conversations: ', updatedConversations)
+		console.log("new Conversations: ", updatedConversations);
 
 		// Update the state
 		updateConversations(updatedConversations);
@@ -189,58 +193,68 @@ function Messages() {
 			className="relative flex w-full flex-col overflow-hidden rounded bg-black"
 			ref={boxRef}
 		>
-			{/* top */}
-			<div className="flex border-b border-border_grey" ref={titleRef}>
-				<div className="flex w-1/6 items-center justify-center">
-					<ArrowLeft className="lg:hidden" onClick={handleBack} />
-				</div>
-				<div className="flex w-4/6 justify-center gap-1 p-4 font-bold">
-					<span>{user?.username}</span>
-					<DropDown className="" stroke="white" />
-				</div>
-				<div
-					className="flex w-1/6 items-center"
-					onClick={() => setIsOpenUserSearchBox(true)}
-				>
-					<CreateMessage stroke="white" className="cursor-pointer" />
-				</div>
-				{isOpenUserSearchBox && (
-					<SearchAccounts
-						onCancel={() => {
-							setIsOpenUserSearchBox(false);
-						}}
-					/>
-				)}
-			</div>
 			<div className="flex h-full" ref={contentRef}>
-				<div
-					className="w-full border-r border-border_grey lg:w-2/5"
-					ref={conversationsRef}
-				>
-					{/* users */}
-					<div className="h-full overflow-y-auto">
-						{conversations.map((conversation, index: any) => {
-							return (
-								<AccountMessage
-									username={conversation.participant.username}
-									profile_img={conversation.participant.avatar || ""}
-									last_message={conversation.lastMessage?.content}
-									setSelectChat={setSelectedChat}
-									width={60}
-									height={60}
-									key={conversation.participant.username}
-									onClick={updateVisibility}
-									userId={conversation.participant.id}
-								/>
-							);
-						})}
+				<div className="lg:w-2/5 w-full border-r border-border_grey">
+					{/* top of conversation list */}
+					<div
+						className="flex border-b border-border_grey p-3 justify-between"
+						ref={titleRef}
+					>
+						{/* back button */}
+						<div className="flex w-1/6 items-center justify-center">
+							<ArrowLeft className="lg:hidden" onClick={handleBack} />
+						</div>
+
+						{/* create message button */}
+						<div
+							className="flex w-1/6 items-center"
+							onClick={() => setIsOpenUserSearchBox(true)}
+						>
+							<CreateMessage stroke="white" className="cursor-pointer" />
+						</div>
+
+						{/* search accounts modal */}
+						{isOpenUserSearchBox && (
+							<SearchAccounts
+								onCancel={() => {
+									setIsOpenUserSearchBox(false);
+								}}
+							/>
+						)}
+					</div>
+					<div ref={conversationsRef}>
+						{/* users */}
+						<div className="h-full overflow-y-auto">
+							{conversations.map((conversation, index: any) => {
+								return (
+									<AccountMessage
+										username={conversation.participant.username}
+										profile_img={conversation.participant.avatar || ""}
+										last_message={conversation.lastMessage?.content}
+										setSelectChat={setSelectedChat}
+										width={60}
+										height={60}
+										key={conversation.participant.username}
+										onClick={updateVisibility}
+										userId={conversation.participant.id}
+									/>
+								);
+							})}
+						</div>
 					</div>
 				</div>
 
 				<div
 					className="hidden h-full w-full lg:block lg:w-3/5" /* ref={chatsRef} */
 				>
-					{selectedChat ? <ChatBox recipient={selectedChat} /> : null}
+					{selectedChat ? (
+						<>
+							<div className="flex border-b border-border_grey p-3 justify-end">
+								<VideoCall userId={selectedChat} />
+							</div>
+							<ChatBox recipient={selectedChat} />
+						</>
+					) : null}
 				</div>
 			</div>
 		</div>
