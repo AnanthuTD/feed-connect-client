@@ -13,8 +13,6 @@ import { GET_CONVERSATIONS, GET_PROFILE_BY_ID } from "@/graphql/queries";
 import { useChatLogic } from "./hooks/useChatLogic";
 import useConversation from "./hooks/useConversation";
 import type { Chat, Conversation } from "@/utils/Interfaces";
-import { VideoCameraAddOutlined } from "@ant-design/icons";
-import VideoCallModal from "./_components/videoCallModal";
 import VideoCall from "./_components/VideoCall";
 
 type Conversations = Conversation[];
