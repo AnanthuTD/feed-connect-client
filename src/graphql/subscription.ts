@@ -18,20 +18,20 @@ export const SUBSCRIBE_CONVERSATION = gql`
 `;
 
 export const OFFER_RECEIVED = gql`
-subscription {
-	offerReceived {
-		offer {
-			type
-			sdp
-		}
-		callerInfo{
-			username
-			avatar
-			fullName
-			id
+	subscription {
+		offerReceived {
+			offer {
+				type
+				sdp
+			}
+			callerInfo {
+				username
+				avatar
+				fullName
+				id
+			}
 		}
 	}
-}
 `;
 
 export const ANSWER_RECEIVED = gql`
@@ -49,6 +49,14 @@ export const ICE_CANDIDATE_RECEIVED = gql`
 			candidate
 			sdpMid
 			sdpMLineIndex
+		}
+	}
+`;
+
+export const CALL_ENDED = gql`
+	subscription {
+		callEnded {
+			targetUserId
 		}
 	}
 `;

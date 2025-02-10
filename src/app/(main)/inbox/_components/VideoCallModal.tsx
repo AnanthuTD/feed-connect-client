@@ -4,12 +4,14 @@ import { useMutation, useSubscription } from "@apollo/client";
 import Modal from "antd/es/modal/Modal";
 import { Button, Typography } from "antd";
 import {
+	END_CALL,
 	SEND_ANSWER,
 	SEND_ICE_CANDIDATE,
 	SEND_OFFER,
 } from "@/graphql/mutation";
 import {
 	ANSWER_RECEIVED,
+	CALL_ENDED,
 	ICE_CANDIDATE_RECEIVED,
 } from "@/graphql/subscription";
 import FooterControls from "./FooterControls";
@@ -55,12 +57,14 @@ function VideoCallModal({
 	const [sendOffer] = useMutation(SEND_OFFER);
 	const [sendAnswer] = useMutation(SEND_ANSWER);
 	const [sendIceCandidate] = useMutation(SEND_ICE_CANDIDATE);
+	const [endCall] = useMutation(END_CALL);
 
 	/* subscription for answer and ice candidate data */
 	const { data: answerData } = useSubscription(ANSWER_RECEIVED, {
 		shouldResubscribe: true,
 	});
 	const { data: iceCandidateData } = useSubscription(ICE_CANDIDATE_RECEIVED);
+	const { data: callEndedData } = useSubscription(CALL_ENDED);
 
 	/* audio and video tracks */
 	const audioTrackRef = useRef<MediaStreamTrack | null>(null);
@@ -97,10 +101,25 @@ function VideoCallModal({
 				}
 			};
 
+			pc.oniceconnectionstatechange = (event) => {
+				console.log("===============================================");
+				console.log("ice connection state changed...", event);
+				console.log("===============================================");
+
+				if (pc.iceConnectionState === "closed") {
+					releaseStream();
+					peerConnection?.close();
+					onClose();
+				}
+			};
+
 			setPeerConnection(pc);
 
 			if (type === "call") {
 				alert("addTrack");
+
+				releaseMediaDevices();
+				releaseStream();
 
 				await addTrackToPeerConnection(
 					pc,
@@ -111,10 +130,15 @@ function VideoCallModal({
 			}
 		}
 
+		releaseStream();
 		configurePeerConnection();
 
 		return () => {
 			peerConnection?.close();
+			releaseStream();
+			releaseMediaDevices();
+
+			alert("release");
 		};
 	}, [sendIceCandidate]);
 
@@ -203,9 +227,58 @@ function VideoCallModal({
 		sendOffer({ variables: { offer: { ...offer, targetUserId } } });
 	};
 
+	function releaseStream() {
+		[myVideoRef, peerVideoRef].forEach((vid, index) => {
+			if (vid.current && vid.current.srcObject) {
+				const stream = vid.current.srcObject as MediaStream;
+				stream.getTracks().forEach((track) => {
+					console.log(
+						`Track ${index + 1}: ${track.kind}, State: ${track.readyState}`
+					);
+					track.stop();
+				});
+				vid.current.pause();
+				vid.current.srcObject = null;
+			}
+		});
+	}
+
+	function releaseMediaDevices() {
+		navigator.mediaDevices
+			.getUserMedia({ video: true, audio: true })
+			.then((stream) => {
+				stream.getTracks().forEach((track) => track.stop());
+			})
+			.catch((err) => console.warn("Error releasing media devices:", err));
+	}
+
+	useEffect(() => {
+		return () => {
+			releaseStream();
+			releaseMediaDevices();
+
+			alert("release from all");
+		};
+	}, []);
+
+	/* handle call ended */
+	useEffect(() => {
+		if (callEndedData) {
+			console.log("Call ended by the other user");
+			releaseStream();
+			releaseMediaDevices();
+
+			peerConnection?.close();
+			onClose();
+		}
+	}, [callEndedData, peerConnection]);
+
 	/* stop call */
 	const handleEndCall = () => {
+		releaseStream();
+		releaseMediaDevices();
 		peerConnection?.close();
+		endCall({ variables: { targetUserId } });
 		onClose();
 	};
 
@@ -286,4 +359,4 @@ function VideoCallModal({
 	);
 }
 
-export default VideoCallModal;
+export default React.memo(VideoCallModal);

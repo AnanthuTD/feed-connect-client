@@ -1,4 +1,4 @@
-import React, { Profiler, useEffect, useState } from "react";
+import React, { Profiler, useCallback, useEffect, useState } from "react";
 import { VideoCameraAddOutlined } from "@ant-design/icons";
 import VideoCallModal from "./VideoCallModal";
 import { useQuery } from "@apollo/client";
@@ -7,10 +7,10 @@ import { gql } from "@apollo/client";
 const GET_USER_PROFILE = gql`
 	query GetUserProfile($username: String, $id: ID) {
 		userProfile(username: $username, id: $id) {
-				id
-				username
-				fullName
-				avatar
+			id
+			username
+			fullName
+			avatar
 		}
 	}
 `;
@@ -25,20 +25,13 @@ function VideoCall({ userId }: { userId: string }) {
 		},
 	});
 
-	useEffect(() => {
-		if (calleeProfile?.userProfile?.user) {
-			console.log(calleeProfile?.userProfile?.user);
-			setIsOpen(true);
-		}
-	}, [calleeProfile]);
-
 	const handleOpen = () => {
-		setIsOpen(true);
+			setIsOpen(true);
 	};
 
-	const handleClose = () => {
+	const handleClose = useCallback(() => {
 		setIsOpen(false);
-	};
+	}, []);
 
 	function onRender(
 		id: string,
@@ -46,7 +39,7 @@ function VideoCall({ userId }: { userId: string }) {
 		actualDuration: number,
 		baseDuration: number,
 		startTime: number,
-		commitTime: number,
+		commitTime: number
 	) {
 		// Aggregate render timings
 		console.log({
@@ -61,20 +54,18 @@ function VideoCall({ userId }: { userId: string }) {
 
 	return (
 		<>
-			<Profiler id="App" onRender={onRender}>
+				<VideoCameraAddOutlined style={{ fontSize: 25 }} onClick={handleOpen} />
 
-			<VideoCameraAddOutlined style={{ fontSize: 25 }} onClick={handleOpen} />
-
-			{isOpen && (
-				<VideoCallModal
-					onClose={handleClose}
-					offerData={null}
-					calleeInfo={calleeProfile?.userProfile}
+				{isOpen && calleeProfile?.userProfile && (
+					<VideoCallModal
+						onClose={handleClose}
+						offerData={null}
+						calleeInfo={calleeProfile?.userProfile}
+						type="call"
 					/>
 				)}
-				</Profiler>
 		</>
 	);
 }
 
-export default VideoCall;
+export default React.memo(VideoCall);
